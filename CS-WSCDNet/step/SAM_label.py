@@ -49,9 +49,35 @@ def SAM(args):
 
     for file_name in os.listdir(folderA_path):
         if file_name.endswith('.png'):
-            mask = cv2.imread(os.path.join(mask_path, file_name), 0)
-            imageA = cv2.imread(os.path.join(folderA_path, file_name))
-            imageB = cv2.imread(os.path.join(folderB_path, file_name))
+            # 检查文件是否存在
+            mask_file = os.path.join(mask_path, file_name)
+            imageA_file = os.path.join(folderA_path, file_name)
+            imageB_file = os.path.join(folderB_path, file_name)
+            
+            if not os.path.exists(mask_file):
+                print(f"Warning: mask not found for {file_name}, skipping...")
+                continue
+            if not os.path.exists(imageA_file):
+                print(f"Warning: imageA not found for {file_name}, skipping...")
+                continue
+            if not os.path.exists(imageB_file):
+                print(f"Warning: imageB not found for {file_name}, skipping...")
+                continue
+            
+            mask = cv2.imread(mask_file, 0)
+            imageA = cv2.imread(imageA_file)
+            imageB = cv2.imread(imageB_file)
+            
+            if mask is None:
+                print(f"Warning: failed to load mask for {file_name}, skipping...")
+                continue
+            if imageA is None:
+                print(f"Warning: failed to load imageA for {file_name}, skipping...")
+                continue
+            if imageB is None:
+                print(f"Warning: failed to load imageB for {file_name}, skipping...")
+                continue
+                
             mask = cv2.resize(mask, (256,256))
 
             input_box = get_all_target_bboxes(mask)

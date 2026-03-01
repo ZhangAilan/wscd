@@ -14,10 +14,10 @@ if __name__ == '__main__':
     # Environment
     # parser.add_argument("--num_workers", default=os.cpu_count()//2, type=int)
     parser.add_argument("--num_workers", default=12, type=int)
-    parser.add_argument("--CAM_root", default='dataset/BCD', type=str,
+    parser.add_argument("--CAM_root", required=True, type=str,
                         help="Dataset floder. Please enter the folder names for T1,T2 images in the IMG_FOLDER_NAME_A and IMG_FOLDER_NAME_B sections of the dataloader")
-    parser.add_argument("--SAM_A", default="./dataset/BCD/train/A1/", type=str)
-    parser.add_argument("--SAM_B", default="./dataset/BCD/train/B1/", type=str,
+    parser.add_argument("--SAM_A", required=True, type=str)
+    parser.add_argument("--SAM_B", required=True, type=str,
                         help = "Remove the unchanged pixel pairs in the predicted mask, and only use SAM for the changed pixel pairs")
     parser.add_argument("--SAM_weight", default="./pth/sam_vit_h_4b8939.pth", type=str,
                         help = "sam_vit_h_4b8939.pth")
