@@ -63,7 +63,7 @@ if __name__ == '__main__':
     parser.add_argument("--make_recam_pass", default=True)
     parser.add_argument("--cam_to_ir_label_pass", default=True) 
     parser.add_argument("--cam_to_mask_pass", default=True)
-    parser.add_argument("--SAM_label_pass", default=False)  
+    parser.add_argument("--SAM_label_pass", default=True)  
  
     args = parser.parse_args()
     args.log_name = osp.join(args.work_space,args.log_name)
