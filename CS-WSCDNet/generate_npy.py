@@ -25,17 +25,20 @@ def generate_npy(label_folder, output_path):
             
             # 阈值判断：白色像素 >= 0.30% 则为变化 (1)，否则为无变化 (0)
             label_value = 1 if white_pixel_percentage >= 0.30 else 0
-            
+
             # 提取图像名 (去除 .png 后缀)
             img_name = filename.replace(".png", "")
-            
+
             # 尝试转换为整数，如果失败则保留字符串格式
             try:
                 dict_key = int(img_name)
             except ValueError:
                 dict_key = img_name
-            
-            label_dict[dict_key] = np.array([label_value], dtype=np.int32)
+
+            # 生成 2 类 multi-hot 标签：[无变化，有变化]
+            label = np.zeros(2, dtype=np.int32)
+            label[label_value] = 1
+            label_dict[dict_key] = label
     
     np.save(output_path, label_dict)
     print(f"已生成 {len(label_dict)} 个图像标签")

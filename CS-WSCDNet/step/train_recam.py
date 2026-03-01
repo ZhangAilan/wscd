@@ -52,7 +52,7 @@ def run(args):
     model.load_state_dict(torch.load(args.cam_weights_name), strict=True)
     model = torch.nn.DataParallel(model).cuda()
 
-    recam_predictor = net.resnet50_cam.Class_Predictor(10, 2048)
+    recam_predictor = net.resnet50_cam.Class_Predictor(2, 2048)
     recam_predictor = torch.nn.DataParallel(recam_predictor).cuda()
     recam_predictor.train()
 

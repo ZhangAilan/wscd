@@ -11,7 +11,7 @@ from net import resnet50
 
 class Net(nn.Module):
 
-    def __init__(self, stride=16, n_classes=10):  #n_class set to 10 to prevent gradient explosion and overfitting,there are actually only two classes.
+    def __init__(self, stride=16, n_classes=2):
         super(Net, self).__init__()
         if stride == 16:
             self.resnet50 = resnet50.resnet50(pretrained=True, strides=(2, 2, 2, 1))
@@ -77,7 +77,7 @@ class Net(nn.Module):
 
 class Net_CAM(Net):
 
-    def __init__(self,stride=16,n_classes=10): #n_class set to 10 to prevent gradient explosion and overfitting,there are actually only two classes.
+    def __init__(self,stride=16,n_classes=2):
         super(Net_CAM, self).__init__(stride=stride,n_classes=n_classes)
         
     def forward(self, x):
@@ -102,7 +102,7 @@ class Net_CAM(Net):
 
 class Net_CAM_Feature(Net):
 
-    def __init__(self,stride=16,n_classes=10): #n_class set to 10 to prevent gradient explosion and overfitting,there are actually only two classes.
+    def __init__(self,stride=16,n_classes=2):
         super(Net_CAM_Feature, self).__init__(stride=stride,n_classes=n_classes)
         
     def forward(self, x1, x2):
@@ -141,7 +141,7 @@ class Net_CAM_Feature(Net):
 
 class CAM(Net):
 
-    def __init__(self, stride=16,n_classes=10): #n_class set to 10 to prevent gradient explosion and overfitting,there are actually only two classes.
+    def __init__(self, stride=16,n_classes=2):
         super(CAM, self).__init__(stride=stride,n_classes=n_classes)
 
     def forward(self, x1, x2, separate=False):
