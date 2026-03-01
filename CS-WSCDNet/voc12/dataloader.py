@@ -8,8 +8,8 @@ from misc import imutils
 from PIL import Image
 import torch.nn.functional as F
 
-IMG_FOLDER_NAME_B = "B1"
-IMG_FOLDER_NAME_A = "A1"
+IMG_FOLDER_NAME_B = "B"
+IMG_FOLDER_NAME_A = "A"
 
 cls_labels_dict = np.load('dataset/WHU/whu.npy', allow_pickle=True).item()
 
