@@ -20,7 +20,7 @@ def _work(process_id, model, dataset, args):
     databin = dataset[process_id]
     n_gpus = torch.cuda.device_count()
     data_loader = DataLoader(databin, shuffle=False, num_workers=args.num_workers // n_gpus, pin_memory=False)
-    recam_predictor = net.resnet50_cam.Class_Predictor(10, 2048)
+    recam_predictor = net.resnet50_cam.Class_Predictor(2, 2048)
     recam_predictor.load_state_dict(torch.load(osp.join(args.recam_weight_dir,'recam_predictor_'+str(args.recam_num_epoches) + '.pth')))
 
     with torch.no_grad(), cuda.device(process_id):
