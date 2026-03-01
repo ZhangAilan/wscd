@@ -31,15 +31,14 @@ if __name__ == '__main__':
     parser.add_argument("--cam_crop_size", default=224, type=int)
     parser.add_argument("--cam_batch_size", default=16, type=int)
     parser.add_argument("--cam_num_epoches", default=5, type=int)
-    parser.add_argument("--cam_learning_rate", default=0.05, type=float)
+    parser.add_argument("--cam_learning_rate", default=0.001, type=float)
     parser.add_argument("--cam_weight_decay", default=1e-4, type=float)
     parser.add_argument("--cam_scales", default=(1.0, 0.5, 1.5, 2.0),
                         help="Multi-scale inferences")
     # ReCAM
     parser.add_argument("--recam_num_epoches", default=10, type=int)
-    parser.add_argument("--recam_learning_rate", default=0.0005, type=float)
-    parser.add_argument("--recam_loss_weight", default=0.85, type=float) # To a certain extent, you can control the balance of precision and recall of pseudo label generation, 
-                                                                        # the larger the value, the larger the recall, but the corresponding precision will be reduced.
+    parser.add_argument("--recam_learning_rate", default=0.0001, type=float)
+    parser.add_argument("--recam_loss_weight", default=0.5, type=float)
     
 
     # Mining Inter-pixel Relations
