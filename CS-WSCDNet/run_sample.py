@@ -4,24 +4,27 @@ import numpy as np
 import os.path as osp
 
 from misc import pyutils
+from voc12.dataloader import init_cls_labels_dict
 
 if __name__ == '__main__':
-   
+
 
     parser = argparse.ArgumentParser()
 
     # Environment
     # parser.add_argument("--num_workers", default=os.cpu_count()//2, type=int)
     parser.add_argument("--num_workers", default=12, type=int)
-    parser.add_argument("--CAM_root", default='dataset/BCD', type=str, 
+    parser.add_argument("--CAM_root", default='dataset/BCD', type=str,
                         help="Dataset floder. Please enter the folder names for T1,T2 images in the IMG_FOLDER_NAME_A and IMG_FOLDER_NAME_B sections of the dataloader")
     parser.add_argument("--SAM_A", default="./dataset/BCD/train/A1/", type=str)
-    parser.add_argument("--SAM_B", default="./dataset/BCD/train/B1/", type=str, 
+    parser.add_argument("--SAM_B", default="./dataset/BCD/train/B1/", type=str,
                         help = "Remove the unchanged pixel pairs in the predicted mask, and only use SAM for the changed pixel pairs")
-    parser.add_argument("--SAM_weight", default="./pth/sam_vit_h_4b8939.pth", type=str, 
+    parser.add_argument("--SAM_weight", default="./pth/sam_vit_h_4b8939.pth", type=str,
                         help = "sam_vit_h_4b8939.pth")
 
     # Dataset
+    parser.add_argument("--dataset", default="WHU", type=str, choices=["WHU", "LEVIR"],
+                        help="Dataset selection: WHU or LEVIR (default: WHU)")
     parser.add_argument("--train_list", default="dataset/WHU/train.txt", type=str)
     parser.add_argument("--val_list", default="dataset/WHU/val.txt", type=str)
 
@@ -73,6 +76,9 @@ if __name__ == '__main__':
     args.recam_weight_dir = osp.join(args.work_space,args.recam_weight_dir)
     args.mask = osp.join(args.work_space,args.mask)
     args.SAMlabel = osp.join(args.work_space,args.SAMlabel)
+
+    # 初始化数据集标签字典
+    init_cls_labels_dict(args.dataset)
 
     os.makedirs(args.work_space, exist_ok=True)
     os.makedirs(args.cam_out_dir, exist_ok=True)

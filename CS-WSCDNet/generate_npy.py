@@ -47,9 +47,9 @@ def generate_npy(label_folder, output_path):
 
 if __name__ == "__main__":
     # 修改为你的标签文件夹路径
-    label_folder = r"D:\project\CD\Dataset\whu_CDC_dataset_converted\label"
+    label_folder = r"D:\project\CD\Dataset\LEVIR-MCI-dataset_converted\label"
     
     # 输出路径
-    output_path = r"D:\project\CD\wscd\CS-WSCDNet\dataset\WHU\whu.npy"
+    output_path = r"D:\project\CD\wscd\CS-WSCDNet\dataset\LEVIR\levir.npy"
     
     generate_npy(label_folder, output_path)

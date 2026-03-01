@@ -11,7 +11,17 @@ import torch.nn.functional as F
 IMG_FOLDER_NAME_B = "B"
 IMG_FOLDER_NAME_A = "A"
 
-cls_labels_dict = np.load('dataset/WHU/whu.npy', allow_pickle=True).item()
+cls_labels_dict = None
+
+def init_cls_labels_dict(dataset_name='WHU'):
+    """初始化类别标签字典"""
+    global cls_labels_dict
+    if dataset_name == 'WHU':
+        cls_labels_dict = np.load('dataset/WHU/whu.npy', allow_pickle=True).item()
+    elif dataset_name == 'LEVIR':
+        cls_labels_dict = np.load('dataset/LEVIR/levir.npy', allow_pickle=True).item()
+    else:
+        raise ValueError(f"Unknown dataset: {dataset_name}. Supported: WHU, LEVIR")
 
 def decode_int_filename(int_filename):
     # 支持字符串和整数两种格式
