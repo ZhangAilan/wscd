@@ -27,8 +27,15 @@ def decode_int_filename(int_filename):
 
 
 def load_image_label_list_from_npy(img_name_list):
-
-    return np.array([cls_labels_dict[img_name] for img_name in img_name_list])
+    labels = []
+    for img_name in img_name_list:
+        if img_name in cls_labels_dict:
+            labels.append(cls_labels_dict[img_name])
+        elif str(img_name) in cls_labels_dict:
+            labels.append(cls_labels_dict[str(img_name)])
+        else:
+            raise KeyError(f"Label not found for image: {img_name}")
+    return np.array(labels)
 
 def get_img_pathB(img_name, CAM_root):
     if not isinstance(img_name, str):
@@ -42,12 +49,18 @@ def get_img_pathA(img_name, CAM_root):
 
 def load_img_name_list(dataset_path):
 
-    # img_name_list = np.loadtxt(dataset_path, dtype=np.int32)
     img_name_list = np.loadtxt(dataset_path, dtype=np.str_)
-    img_name_list = [int(name.replace('_', '')) for name in img_name_list]
-    img_name_list = np.asarray(img_name_list, dtype=np.int32)
-
-    return img_name_list
+    
+    processed_list = []
+    for name in img_name_list:
+        name_without_ext = name.replace('.png', '').replace('.jpg', '')
+        try:
+            processed_name = int(name_without_ext.replace('_', ''))
+        except ValueError:
+            processed_name = name_without_ext
+        processed_list.append(processed_name)
+    
+    return np.array(processed_list, dtype=object)
 
 
 class TorchvisionNormalize():
