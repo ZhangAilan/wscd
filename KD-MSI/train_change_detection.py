@@ -57,7 +57,7 @@ parser.add_argument('--nesterov', default=True, type=str2bool)
 parser.add_argument('--image_size', default=256, type=int)
 parser.add_argument('--print_ratio', default=0.1, type=float)
 parser.add_argument('--tag', default='WHU_weakly_change_detection', type=str)
-parser.add_argument('--label_name', default='WHU_KD_T_minus_S_cat@train@scale=0.5,1.0,1.5,2.0_sigmoid@crf=0@255@threshold0.65@imageB', type=str)
+parser.add_argument('--predict_path', required=True, type=str)
 parser.add_argument('--fully_supervised', default=False, type=str2bool)
 
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     data_dir = create_directory(f'./experiments/data/')
     model_dir = create_directory('./experiments/models/')
     tensorboard_dir = create_directory(f'./experiments/tensorboards/{args.tag}/')
-    pred_dir = './experiments/predictions/{}/'.format(args.label_name)
+    pred_dir = args.predict_path
     
     log_path = log_dir + f'{args.tag}.txt'
     model_path = model_dir + f'{args.tag}.pth'
