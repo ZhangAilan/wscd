@@ -49,8 +49,10 @@ if __name__ == '__main__':
     ImageYName = 'T2.tif'
     RefName = 'ref.tif'
 
-    # output path
-    outdir = dir
+    # output path - 使用独立输出目录 (避免 Kaggle 等环境的只读文件系统问题)
+    outdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', 'USSS')
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
     ext = '_l1w065_pw04_github' # only used to label the output result with different file name
     CMapName = 'ChangeDensity{}'.format(ext)
     # a txt file to record the mean/std of the image
@@ -88,8 +90,9 @@ if __name__ == '__main__':
     dataset = GDALDataset(ImgXPath, ImgYPath, outPath=OutPath, patch_size=patch_size,
                           overlap_padding=(0, 0))
 
-    statsPath1 = os.path.join(dir, '{}_{}.txt'.format(FileName1, statsName))
-    statsPath2 = os.path.join(dir, '{}_{}.txt'.format(FileName2, statsName))
+    # 将统计文件保存到输出目录 (避免 Kaggle 等环境的只读文件系统问题)
+    statsPath1 = os.path.join(outdir, '{}_{}_meanstd.txt'.format(FileName1, statsName))
+    statsPath2 = os.path.join(outdir, '{}_{}_meanstd.txt'.format(FileName2, statsName))
     meanX, stdX, meanY, stdY = Dataset_meanstd(statsPath1, statsPath2, dataset)
     # normalize the input image
     scaler = NORMALIZE(meanX, stdX, meanY, stdY)

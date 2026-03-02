@@ -158,8 +158,9 @@ if __name__ == '__main__':
     statsName = 'stats'
     dataset = WHU_Dataset(ImgDirX, ImgDirY, RefDir, LabelDir, label_selected='-1')
     # scale_list1, scale_list2 = Dataset_maxmin(statsPath1, statsPath2, dataset)
-    statsPath1 = os.path.join(ImgDirX, '{}_meanstd.txt'.format(statsName))
-    statsPath2 = os.path.join(ImgDirY, '{}_meanstd.txt'.format(statsName))
+    # 将统计文件保存到输出目录 (避免 Kaggle 等环境的只读文件系统问题)
+    statsPath1 = os.path.join(OutDir, '{}_meanstd_X.txt'.format(statsName))
+    statsPath2 = os.path.join(OutDir, '{}_meanstd_Y.txt'.format(statsName))
     meanX, stdX, meanY, stdY = Dataset_meanstd(statsPath1, statsPath2, dataset)
     # scaler = SCALE(scale_list1, scale_list2)
     scaler = NORMALIZE(meanX, stdX, meanY, stdY)

@@ -67,9 +67,10 @@ if __name__ == '__main__':
 
     writer = SummaryWriter(comment='RSSS_OSCD{}'.format(extName))   # tensorboard
 
-    OutDir = os.path.join(imgDir, 'model{}'.format(extName))    # dir to save network model
+    # 输出目录使用独立路径 (避免 Kaggle 等环境的只读文件系统问题)
+    OutDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', 'RSSS_OSCD{}'.format(extName))
     if os.path.exists(OutDir) == False:
-        os.mkdir(OutDir)
+        os.makedirs(OutDir)
 
     # obtain the parameter for normalization and pre-preocessing
     tmp_dataset = OSCD_Dataset_RSS(imgDir, txtName)
@@ -86,8 +87,9 @@ if __name__ == '__main__':
         cur_ImgXName, _ = os.path.splitext(cur_ImgXName)
         cur_ImgYName, _ = os.path.splitext(cur_ImgYName)
         dataset_tmp = GDALDataset(ImgXPath, ImgYPath, patch_size=patch_size, overlap_padding=(0, 0))
-        statsPath1 = os.path.join(cur_path, '{}_{}.txt'.format(cur_ImgXName, statsName))
-        statsPath2 = os.path.join(cur_path, '{}_{}.txt'.format(cur_ImgYName, statsName))
+        # 将统计文件保存到输出目录 (避免 Kaggle 等环境的只读文件系统问题)
+        statsPath1 = os.path.join(OutDir, '{}_{}_{}_meanstd.txt'.format(cur_ImgXName, cur_ImgYName, statsName))
+        statsPath2 = os.path.join(OutDir, '{}_{}_{}_meanstd.txt'.format(cur_ImgXName, cur_ImgYName, statsName))
         # scale_list1, scale_list2 = Dataset_maxmin(statsPath1, statsPath2, dataset_tmp)
         meanX, stdX, meanY, stdY = Dataset_meanstd(statsPath1, statsPath2, dataset_tmp) # normalization is DEFAULT
 
@@ -116,8 +118,9 @@ if __name__ == '__main__':
         cur_ImgXName, _ = os.path.splitext(cur_ImgXName)
         cur_ImgYName, _ = os.path.splitext(cur_ImgYName)
         dataset_tmp = GDALDataset(ImgXPath, ImgYPath, patch_size=patch_size, overlap_padding=(0, 0))
-        statsPath1 = os.path.join(cur_path, '{}_{}.txt'.format(cur_ImgXName, statsName))
-        statsPath2 = os.path.join(cur_path, '{}_{}.txt'.format(cur_ImgYName, statsName))
+        # 将统计文件保存到输出目录 (避免 Kaggle 等环境的只读文件系统问题)
+        statsPath1 = os.path.join(OutDir, '{}_{}_{}_meanstd.txt'.format(cur_ImgXName, cur_ImgYName, statsName))
+        statsPath2 = os.path.join(OutDir, '{}_{}_{}_meanstd.txt'.format(cur_ImgXName, cur_ImgYName, statsName))
         # scale_list1, scale_list2 = Dataset_maxmin(statsPath1, statsPath2, dataset_tmp)
         # scaler_list.append(SCALE(scale_list1=scale_list1, scale_list2=scale_list2))
 
