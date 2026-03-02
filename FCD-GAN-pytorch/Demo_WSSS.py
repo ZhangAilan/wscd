@@ -16,6 +16,7 @@ from tqdm import tqdm
 import gc
 from PIL import Image
 import time
+from skimage.transform import resize
 
 from Module import *
 from data_utils import *
@@ -430,6 +431,9 @@ if __name__ == '__main__':
                     change_mask = cmask[ns][0]
                     change_mask = change_mask.cpu().numpy()
                     ref_mask = ref[ns][0].numpy()
+                    # 确保形状一致，调整预测掩码以匹配参考掩码
+                    if ref_mask.shape != change_mask.shape:
+                        change_mask = resize(change_mask.astype(float), ref_mask.shape, order=0, preserve_range=True).astype(np.int16)
                     acc.add_batch(ref_mask.astype(np.int16), change_mask.astype(np.int16))
 
                 process_num += x.size()[0]
