@@ -22,7 +22,7 @@ parser.add_argument("--config",default='configs/BCD.yaml',type=str,
 parser.add_argument("--save_dir", default="./results/BCD", type=str, help="save_dir")
 parser.add_argument("--eval_set", default="test", type=str, help="eval_set")
 # model_path
-parser.add_argument("--model_path", default=r"E:\1\2024-09-14-15-28/acwcd_iter_20000.pth", type=str, help="model_path")
+parser.add_argument("--model_path", required=True, type=str, help="model_path")
 parser.add_argument("--pooling", default="gmp", type=str, help="pooling method")
 parser.add_argument("--bkg_score", default=0.50, type=float, help="bkg_score")
 parser.add_argument("--resize_long", default=256, type=int, help="resize the long side (256 or 512)")
