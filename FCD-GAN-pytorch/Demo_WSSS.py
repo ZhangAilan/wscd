@@ -48,7 +48,7 @@ if __name__ == '__main__':
                         help='输出目录扩展名')
     
     # 训练参数
-    parser.add_argument('--cuda', type=int, default=2, 
+    parser.add_argument('--cuda', type=int, default=0, 
                         help='CUDA 设备编号')
     parser.add_argument('--init_epochs_g', type=int, default=50, 
                         help='生成器预训练轮数')
@@ -95,8 +95,18 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
 
-    # 设置设备
-    device = torch.device('cuda:{}'.format(args.cuda) if torch.cuda.is_available() else 'cpu')
+    # 设置设备 - 自动检测可用 GPU (避免 Kaggle 等设备编号不匹配问题)
+    if torch.cuda.is_available():
+        cuda_device_count = torch.cuda.device_count()
+        # 如果指定的 cuda 编号超出范围，自动使用可用设备
+        if args.cuda >= cuda_device_count:
+            print('Warning: CUDA device {} is out of range, using device 0 instead.'.format(args.cuda))
+            device = torch.device('cuda:0')
+        else:
+            device = torch.device('cuda:{}'.format(args.cuda))
+    else:
+        device = torch.device('cpu')
+    print('Using device:', device)
 
     # 获取项目根目录 (FCD-GAN-pytorch 目录)
     project_root = os.path.dirname(os.path.abspath(__file__))
