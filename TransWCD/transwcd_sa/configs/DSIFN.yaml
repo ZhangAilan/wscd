@@ -20,7 +20,7 @@ work_dir:
 
 train:
   split: train
-  batch_size: 32
+  batch_size: 8
   max_iters: 40000
   cam_iters: 2000
   eval_iters: 500
