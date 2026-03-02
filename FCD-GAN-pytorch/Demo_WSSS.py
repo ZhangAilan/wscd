@@ -48,17 +48,17 @@ if __name__ == '__main__':
                         help='输出目录扩展名')
     
     # 训练参数
-    parser.add_argument('--cuda', type=int, default=0, 
+    parser.add_argument('--cuda', type=int, default=0,
                         help='CUDA 设备编号')
-    parser.add_argument('--init_epochs_g', type=int, default=50, 
+    parser.add_argument('--init_epochs_g', type=int, default=50,
                         help='生成器预训练轮数')
-    parser.add_argument('--num_epochs', type=int, default=50, 
+    parser.add_argument('--num_epochs', type=int, default=50,
                         help='对抗训练轮数')
-    parser.add_argument('--lr', type=float, default=0.0005, 
+    parser.add_argument('--lr', type=float, default=0.0005,
                         help='学习率')
-    parser.add_argument('--batch_size', type=int, default=15, 
+    parser.add_argument('--batch_size', type=int, default=4,
                         help='训练批次大小')
-    parser.add_argument('--unc_batch_size', type=int, default=50, 
+    parser.add_argument('--unc_batch_size', type=int, default=16,
                         help='未变化样本批次大小')
     parser.add_argument('--prob_thresh', type=float, default=0.6, 
                         help='变化概率阈值')
