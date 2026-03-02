@@ -3,7 +3,7 @@ backbone:
   stride: [4, 2, 2, 1]
   comments: None
 
-scheme: transwcd_single #transwcd_single, transwcd_dl_single, transwcd_dl_dual
+scheme: transwcd_dual #transwcd_single, transwcd_dl_single, transwcd_dl_dual
 
 dataset:
   root_dir: E:\weakly_CD_dataset\dataset\whu_CDC_dataset\whu_CDC_dataset_converted
