@@ -12,5 +12,5 @@ ACWCD/work_dir_WHU/
 TransWCD/
 WSLCD/
 MS-Former/
-FCD-GAN-pytorch/
+# FCD-GAN-pytorch/
 bgmix/
