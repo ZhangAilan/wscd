@@ -357,18 +357,19 @@ def train(cfg):
             ckpt_name = os.path.join(cfg.work_dir.ckpt_dir, "acwcd_iter_%d.pth" % (n_iter + 1))
             logging.info('CD Validating...')
             torch.save(acwcd.state_dict(), ckpt_name)
-            seg_score, pseudo_labels_score, _ = validate(model=acwcd, data_loader=val_loader, cfg=cfg)  # _ 为 labels
+            print("Model saved to %s" % ckpt_name)
+            # seg_score, pseudo_labels_score, _ = validate(model=acwcd, data_loader=val_loader, cfg=cfg)  # _ 为 labels
 
-            if seg_score['f1'][1] > best_F1_seg:
-                best_F1_seg = seg_score['f1'][1]
-                best_iter_seg = n_iter + 1
+            # if seg_score['f1'][1] > best_F1_seg:
+            #     best_F1_seg = seg_score['f1'][1]
+            #     best_iter_seg = n_iter + 1
 
-            if pseudo_labels_score['f1'][1] > best_F1_pseudo_labels:
-                best_F1_pseudo_labels = pseudo_labels_score['f1'][1]
-                best_iter_pseudo_labels = n_iter + 1
+            # if pseudo_labels_score['f1'][1] > best_F1_pseudo_labels:
+            #     best_F1_pseudo_labels = pseudo_labels_score['f1'][1]
+            #     best_iter_pseudo_labels = n_iter + 1
 
-            logging.info("pseudo_labels_score: %s, \n[best_iter]: %d", pseudo_labels_score, best_iter_pseudo_labels)
-            logging.info("seg_score: %s, \n[best_iter]: %d", seg_score, best_iter_seg)
+            # logging.info("pseudo_labels_score: %s, \n[best_iter]: %d", pseudo_labels_score, best_iter_pseudo_labels)
+            # logging.info("seg_score: %s, \n[best_iter]: %d", seg_score, best_iter_seg)
 
     return True
 
