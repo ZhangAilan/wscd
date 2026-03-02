@@ -27,7 +27,7 @@ warnings.filterwarnings("ignore")
 parser = argparse.ArgumentParser()
 # DSIFN/CLCD.yaml
 parser.add_argument("--config",
-                    default='configs/BCD.yaml',
+                    default='configs/LEVIR.yaml',
                     type=str,
                     help="config")
 parser.add_argument("--pooling", default="gmp", type=str, help="pooling method")

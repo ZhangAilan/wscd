@@ -17,9 +17,9 @@ from utils.camutils_CD import (cam_to_label, multi_scale_cam_with_change_attn, p
                                align_ref_cam, align_initial_cam, multi_scale_cam, align_ref_cam_)
 parser = argparse.ArgumentParser()
 # DSIFN/CLCD.yaml
-parser.add_argument("--config",default='configs/BCD.yaml',type=str,
+parser.add_argument("--config",default='configs/LEVIR.yaml',type=str,
                     help="config")
-parser.add_argument("--save_dir", default="./results/BCD", type=str, help="save_dir")
+parser.add_argument("--save_dir", default="./results/LEVIR", type=str, help="save_dir")
 parser.add_argument("--eval_set", default="test", type=str, help="eval_set")
 # model_path
 parser.add_argument("--model_path", required=True, type=str, help="model_path")
