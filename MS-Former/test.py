@@ -122,7 +122,7 @@ def val_change_detection(args):
         myTransforms.ToTensor()
     ])
 
-    test_data = myDataLoader.Dataset("test", file_root=args.test_data_root, transform=valDataset)
+    test_data = myDataLoader.Dataset("test", file_root=args.test_data_root, transform=valDataset, list_file=args.test_list_file)
     testLoader = torch.utils.data.DataLoader(
         test_data, shuffle=False,
         batch_size=args.batch_size, num_workers=args.num_workers, pin_memory=False)
@@ -164,6 +164,7 @@ def val_change_detection(args):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--test_data_root', type=str, required=True, help='Testing data directory')
+    parser.add_argument('--test_list_file', type=str, default=None, help='Testing list file path')
     parser.add_argument('--inWidth', type=int, default=256, help='Width of RGB image')
     parser.add_argument('--inHeight', type=int, default=256, help='Height of RGB image')
     parser.add_argument('--patch_size', type=int, default=64, help='size of label patch')

@@ -8,12 +8,15 @@ class Dataset(torch.utils.data.Dataset):
     Class to load the dataset
     '''
 
-    def __init__(self, dataset, file_root='data/', transform=None, label_patch_size=None):
+    def __init__(self, dataset, file_root='data/', transform=None, label_patch_size=None, list_file=None):
         """
         dataset: dataset name, e.g. NJU2K_NLPR_train
         file_root: root of data_path, e.g. ./data/
+        list_file: optional path to list file, if None, use default path
         """
-        self.file_list = open(file_root + '/' + dataset + '/list/' + dataset + '.txt').read().splitlines()
+        if list_file is None:
+            list_file = file_root + '/' + dataset + '/list/' + dataset + '.txt'
+        self.file_list = open(list_file).read().splitlines()
         self.pre_images = [file_root + '/' + dataset + '/A/' + x for x in self.file_list]
         self.post_images = [file_root + '/' + dataset + '/B/' + x for x in self.file_list]
         self.label_patch_size = label_patch_size

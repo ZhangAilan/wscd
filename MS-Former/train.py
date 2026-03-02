@@ -227,7 +227,8 @@ def train_val_change_detection(args):
 
     train_data = myDataLoader.Dataset(
         "train", file_root=args.train_data_root,
-        transform=trainDataset_main, label_patch_size=args.patch_size
+        transform=trainDataset_main, label_patch_size=args.patch_size,
+        list_file=args.train_list_file
     )
     trainLoader = torch.utils.data.DataLoader(
         train_data,
@@ -236,7 +237,8 @@ def train_val_change_detection(args):
     )
 
     test_data = myDataLoader.Dataset(
-        "test", file_root=args.test_data_root, transform=valDataset
+        "test", file_root=args.test_data_root, transform=valDataset,
+        list_file=args.test_list_file
     )
     testLoader = torch.utils.data.DataLoader(
         test_data, shuffle=False,
@@ -326,6 +328,8 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--train_data_root', type=str, required=True, help='Training data directory')
     parser.add_argument('--test_data_root', type=str, required=True, help='Testing data directory')
+    parser.add_argument('--train_list_file', type=str, default=None, help='Training list file path')
+    parser.add_argument('--test_list_file', type=str, default=None, help='Testing list file path')
     parser.add_argument('--inWidth', type=int, default=256, help='Width of RGB image')
     parser.add_argument('--inHeight', type=int, default=256, help='Height of RGB image')
     parser.add_argument('--patch_size', type=int, default=16, help='size of label patch')
