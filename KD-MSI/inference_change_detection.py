@@ -154,8 +154,8 @@ if __name__ == '__main__':
                 imageA = copy.deepcopy(ori_imageA)
                 imageB = copy.deepcopy(ori_imageB)
 
-                imageA = imageA.resize((round(ori_w*scale), round(ori_h*scale)), resample=PIL.Image.CUBIC)
-                imageB = imageB.resize((round(ori_w*scale), round(ori_h*scale)), resample=PIL.Image.CUBIC)
+                imageA = imageA.resize((round(ori_w*scale), round(ori_h*scale)), resample=PIL.Image.BICUBIC)
+                imageB = imageB.resize((round(ori_w*scale), round(ori_h*scale)), resample=PIL.Image.BICUBIC)
                 
                 imageA = normalize_fn(imageA)
                 imageB = normalize_fn(imageB)
