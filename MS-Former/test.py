@@ -26,10 +26,10 @@ def val(args, val_loader, model, vis_dir):
     total_batches = len(val_loader)
     print(len(val_loader))
 
-    for iter, batched_inputs in enumerate(val_loader):
+    for batch_idx, batched_inputs in enumerate(val_loader):
 
         img, patch_target, target = batched_inputs
-        img_name = val_loader.sampler.data_source.file_list[iter]
+        B = img.size(0)  # batch size
         start_time = time.time()
 
         if args.onGPU == True:
@@ -42,12 +42,17 @@ def val(args, val_loader, model, vis_dir):
         target_var = torch.autograd.Variable(target).float()  # only used for evaluation
 
         # run the model
-        B, C, H, W = img_var.size()
-        change_mask = torch.ones(B, 1, H, W).cuda()
+        _, C, H, W = img_var.size()
+        change_mask = torch.zeros(B, 1, H, W).cuda()
         for patch_h in range(0, H, 256):
             for patch_w in range(0, W, 256):
-                patch_mask = model(img_var[:, :, patch_h: patch_h + 256, patch_w: patch_w + 256])
-                change_mask[:, :, patch_h: patch_h + 256, patch_w: patch_w + 256] = patch_mask
+                h_end = min(patch_h + 256, H)
+                w_end = min(patch_w + 256, W)
+                patch_mask = model(img_var[:, :, patch_h: h_end, patch_w: w_end])
+                if patch_mask.size(2) != (h_end - patch_h) or patch_mask.size(3) != (w_end - patch_w):
+                    patch_mask = torch.nn.functional.interpolate(
+                        patch_mask, size=(h_end - patch_h, w_end - patch_w), mode='bilinear', align_corners=False)
+                change_mask[:, :, patch_h: h_end, patch_w: w_end] = patch_mask
 
         pred = torch.where(change_mask > 0.5, torch.ones_like(change_mask), torch.zeros_like(change_mask)).long()
 
@@ -58,31 +63,34 @@ def val(args, val_loader, model, vis_dir):
         if args.onGPU and torch.cuda.device_count() > 1:
             pred = gather(pred, 0, dim=0)
 
-        # save change maps
-        pr = pred[0, 0].cpu().numpy()
-        gt = target_var[0, 0].cpu().numpy()
-        index_tp = np.where(np.logical_and(pr == 1, gt == 1))
-        index_fp = np.where(np.logical_and(pr == 1, gt == 0))
-        index_tn = np.where(np.logical_and(pr == 0, gt == 0))
-        index_fn = np.where(np.logical_and(pr == 0, gt == 1))
-        #
-        map = np.zeros([gt.shape[0], gt.shape[1], 3])
-        map[index_tp] = [255, 255, 255]  # white
-        map[index_fp] = [255, 0, 0]  # red
-        map[index_tn] = [0, 0, 0]  # black
-        map[index_fn] = [0, 255, 255]  # Cyan
+        # save change maps for each image in the batch
+        for i in range(B):
+            img_name = val_loader.sampler.data_source.file_list[batch_idx * B + i]
+            
+            pr = pred[i, 0].cpu().numpy()
+            gt = target_var[i, 0].cpu().numpy()
+            index_tp = np.where(np.logical_and(pr == 1, gt == 1))
+            index_fp = np.where(np.logical_and(pr == 1, gt == 0))
+            index_tn = np.where(np.logical_and(pr == 0, gt == 0))
+            index_fn = np.where(np.logical_and(pr == 0, gt == 1))
+            #
+            map = np.zeros([gt.shape[0], gt.shape[1], 3])
+            map[index_tp] = [255, 255, 255]  # white
+            map[index_fp] = [255, 0, 0]  # red
+            map[index_tn] = [0, 0, 0]  # black
+            map[index_fn] = [0, 255, 0]  # green
 
-        change_map = Image.fromarray(np.array(map, dtype=np.uint8))
-        change_map.save(vis_dir + img_name)
-        
-        # 保存二值预测图到单独文件夹
-        binary_map = Image.fromarray((pr * 255).astype(np.uint8))
-        binary_map.save(args.binary_vis_dir + img_name)
+            change_map = Image.fromarray(np.array(map, dtype=np.uint8))
+            change_map.save(vis_dir + img_name)
 
-        f1 = cd_evaluation.update_cm(pr, gt)
+            # 保存二值预测图到单独文件夹
+            binary_map = Image.fromarray((pr * 255).astype(np.uint8))
+            binary_map.save(args.binary_vis_dir + img_name)
 
-        if iter % 5 == 0:
-            print('\r[%d/%d] F1: %3f time: %.3f' % (iter, total_batches, f1, time_taken),
+            f1 = cd_evaluation.update_cm(pr, gt)
+
+        if batch_idx % 5 == 0:
+            print('\r[%d/%d] F1: %3f time: %.3f' % (batch_idx, total_batches, f1, time_taken),
                   end='')
 
     scores = cd_evaluation.get_scores()
