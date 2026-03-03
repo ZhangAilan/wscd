@@ -82,7 +82,7 @@ parser.add_argument('--student_combination', default='minus', type=str)
 # Inference parameters
 ###############################################################################
 parser.add_argument('--tag', default='', type=str)
-parser.add_argument('--domain', default='train', type=str)
+parser.add_argument('--domain', default='test', type=str)
 parser.add_argument('--scales', default='0.5,1.0,1.25,2.0', type=str)
 
 
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     if 'train' in args.domain:
         experiment_name += '@train'
     else:
-        experiment_name += '@val'
+        experiment_name += '@test'
 
     experiment_name += '@scale=%s'%args.scales
     
@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
     normalize_fn = Normalize(imagenet_mean, imagenet_std)
     dataset = WSCDDataSet_with_ID(pre_img_folder=args.data_dir+'/A', post_img_folder=args.data_dir+'/B',
-                                 list_file=args.data_dir+'/list/train_label.txt',
+                                 list_file=args.data_dir+'/list/test_label.txt',
                                  img_size=args.image_size,change_only= False)
     ###################################################################################
     # Network

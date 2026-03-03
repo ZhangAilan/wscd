@@ -14,3 +14,4 @@ MS-Former/weights/
 MS-Former/pretrained/model.safetensors
 MS-Former/predict/
 MS-Former/predict_binary/
+KD-MSI/tmp/
