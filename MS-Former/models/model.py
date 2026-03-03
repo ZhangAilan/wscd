@@ -2,8 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import timm
+from safetensors.torch import load_file
 from .decoder import FPN
 from .former import Block
+import os
 
 
 class WCDNet(nn.Module):
@@ -16,7 +18,14 @@ class WCDNet(nn.Module):
         self.depth = depth
         # decoder
         channels = [64, 64, 128, 256, 512]
-        self.context_encoder = timm.create_model('resnet18d', features_only=True, pretrained=True)
+        self.context_encoder = timm.create_model('resnet18d', features_only=True, pretrained=False)
+        
+        # 加载本地预训练权重
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        pretrained_path = os.path.join(current_dir, '..', 'pretrained', 'model.safetensors')
+        if os.path.exists(pretrained_path):
+            state_dict = load_file(pretrained_path)
+            self.context_encoder.load_state_dict(state_dict, strict=False)
         self.fpn_net = FPN(channels, self.decoder_channel)
         # attention
         self.memory_tokens = nn.Embedding(self.memory_length, self.embedding_channel)

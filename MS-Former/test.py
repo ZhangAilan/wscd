@@ -74,6 +74,10 @@ def val(args, val_loader, model, vis_dir):
 
         change_map = Image.fromarray(np.array(map, dtype=np.uint8))
         change_map.save(vis_dir + img_name)
+        
+        # 保存二值预测图到单独文件夹
+        binary_map = Image.fromarray((pr * 255).astype(np.uint8))
+        binary_map.save(args.binary_vis_dir + img_name)
 
         f1 = cd_evaluation.update_cm(pr, gt)
 
@@ -98,6 +102,7 @@ def val_change_detection(args):
         args.lr) + '_p_' + str(args.patch_size) + '_m_' + str(args.memory_length) + '_d_' + str(args.depth) + '/'
 
     args.vis_dir = './predict/' + '_patch_' + str(args.patch_size) + '/'
+    args.binary_vis_dir = './predict_binary/' + '_patch_' + str(args.patch_size) + '/'
 
 
     if not os.path.exists(args.save_dir):
@@ -105,6 +110,9 @@ def val_change_detection(args):
 
     if not os.path.exists(args.vis_dir):
         os.makedirs(args.vis_dir)
+    
+    if not os.path.exists(args.binary_vis_dir):
+        os.makedirs(args.binary_vis_dir)
 
     if args.onGPU:
         model = model.cuda()
@@ -163,8 +171,8 @@ def val_change_detection(args):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('--test_data_root', type=str, default='D:\project\CD\Dataset\whu_CDC_dataset\images', help='Testing data directory')
-    parser.add_argument('--test_list_file', type=str, default="D:\project\CD\Dataset\whu_CDC_dataset_converted\list\test.txt", help='Testing list file path')
+    parser.add_argument('--test_data_root', type=str, default=r'D:\project\CD\Dataset\whu_CDC_dataset\images', help='Testing data directory')
+    parser.add_argument('--test_list_file', type=str, default=r"D:\project\CD\Dataset\whu_CDC_dataset_converted\list\test.txt", help='Testing list file path')
     parser.add_argument('--inWidth', type=int, default=256, help='Width of RGB image')
     parser.add_argument('--inHeight', type=int, default=256, help='Height of RGB image')
     parser.add_argument('--patch_size', type=int, default=64, help='size of label patch')

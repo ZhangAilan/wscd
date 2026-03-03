@@ -11,3 +11,6 @@ ACWCD/work_dir_WHU/
 KD-MSI/experiments/
 run.bat
 MS-Former/weights/
+MS-Former/pretrained/model.safetensors
+MS-Former/predict/
+MS-Former/predict_binary/

@@ -12,12 +12,9 @@ import random
 import math
 import sys
 import os
-import gc
 
-from osgeo import gdal
-from osgeo import ogr
-from osgeo import osr
 from tqdm import tqdm
+import rasterio
 
 
 def adjust_learning_rate(optimizer, epoch, lr_start=1e-4, lr_max=1e-3, lr_min=1e-6, lr_warm_up_epoch=20,
@@ -242,29 +239,29 @@ def time_show(time):
     time_desc = '{}{}{}{}'.format(time_d, time_h, time_m, time_s)
     return time_desc
 
-# function to calculate and record max and min value from an image by gdal
-def GDALmaxmin(TxtPath, ImgPath):
+
+# function to calculate and record max and min value from an image using rasterio
+def RasterioMaxmin(TxtPath, ImgPath):
 
     if os.path.exists(TxtPath) == False:
 
-        ImgDS = gdal.Open(ImgPath)
+        with rasterio.open(ImgPath) as ImgDS:
 
-        if ImgDS == None:
-            print('No such a Image file')
-            sys.exit(0)
+            if ImgDS is None:
+                print('No such a Image file')
+                sys.exit(0)
 
-        xsize = ImgDS.RasterXSize
-        ysize = ImgDS.RasterYSize
-        nband = ImgDS.RasterCount
+            xsize = ImgDS.width
+            ysize = ImgDS.height
+            nband = ImgDS.count
 
-        maxmin = []
-        print("Reading Data")
-        for b in tqdm(range(nband)):
-            msImage = ImgDS.GetRasterBand(b + 1).ReadAsArray(0, 0, xsize, ysize)
-            idx = msImage != 0
-            maxmin.append([np.min(msImage[idx]), np.max(msImage[idx])])
-            del msImage
-            gc.collect()
+            maxmin = []
+            print("Reading Data")
+            for b in tqdm(range(nband)):
+                msImage = ImgDS.read(b + 1)
+                idx = msImage != 0
+                maxmin.append([np.min(msImage[idx]), np.max(msImage[idx])])
+                del msImage
 
         TxtFile = open(TxtPath, 'w')
         print("\n Save Stats Txt")
@@ -290,7 +287,8 @@ def GDALmaxmin(TxtPath, ImgPath):
 
     return maxmin
 
-# function to calculate and record max and min value from a gdal dataset with multi-temporal images
+
+# function to calculate and record max and min value from a dataset with multi-temporal images
 def Dataset_maxmin(TxtPath1, TxtPath2, dataset):
 
     if os.path.exists(TxtPath1) == False or os.path.exists(TxtPath2) == False:

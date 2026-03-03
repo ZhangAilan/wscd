@@ -70,3 +70,8 @@ OutDir = os.path.join(imgDir, 'model{}'.format(extName))
 ## About the Dataset
 Demo_USSS can diretly process the whole multi-temporal remote sensing images with the format of '.tif'.
 Demo_WSSS need to read the image with a specific format. The WHU Building dataset can be transformed into a weakly supervised change detection with the code 'BuildingProcess.py'
+
+
+```
+python Demo_WSSS.py --img_dir_x E:\weakly_CD_dataset\dataset\whu_CDC_dataset\whu_CDC_dataset_converted\A --img_dir_y E:\weakly_CD_dataset\dataset\whu_CDC_dataset\whu_CDC_dataset_converted\B --ref_dir E:\weakly_CD_dataset\dataset\whu_CDC_dataset\whu_CDC_dataset_converted\label --label_dir E:\zyh-dinov3-wcd\wscd\FCD-GAN-pytorch\label_whu
+```
