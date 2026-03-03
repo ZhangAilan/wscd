@@ -103,7 +103,6 @@ def main(cfg):
         split=args.eval_set,
         stage='test',
         aug=False,
-        ignore_index=cfg.dataset.ignore_index,
         num_classes=cfg.dataset.num_classes,
     )
 
