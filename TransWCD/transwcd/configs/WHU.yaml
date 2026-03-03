@@ -3,10 +3,10 @@ backbone:
   stride: [4, 2, 2, 1]
   comments: None
 
-scheme: transwcd_single # transwcd_single, transwcd_dual
+scheme: transwcd_dual #transwcd_single, transwcd_dl_single, transwcd_dl_dual
 
 dataset:
-  root_dir: /data/zhenghui.zhao/Dataset/Change Detection/WHU-CD-256
+  root_dir: E:\weakly_CD_dataset\dataset\whu_CDC_dataset\whu_CDC_dataset_converted
   name_list_dir: datasets/WHU
   num_classes: 2
   crop_size: 256
@@ -21,7 +21,7 @@ work_dir:
 
 train:
   split: train
-  batch_size: 32
+  batch_size: 8
   max_iters: 30000
   cam_iters: 2000
   eval_iters: 500

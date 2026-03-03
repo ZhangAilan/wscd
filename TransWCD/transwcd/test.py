@@ -16,11 +16,11 @@ from models.model_transwcd import TransWCD_single, TransWCD_dual
 
 parser = argparse.ArgumentParser()
 # LEVIR/DSIFN/WHU.yaml
-parser.add_argument("--config",default='configs/LEVIR.yaml',type=str,
+parser.add_argument("--config",default='configs/WHU.yaml',type=str,
                     help="config")
 parser.add_argument("--save_dir", default="./results/WHU", type=str, help="save_dir")
 parser.add_argument("--eval_set", default="val", type=str, help="eval_set")
-parser.add_argument("--model_path", default="/data/zhenghui.zhao/Code/TransWCD/transwcd/results/test_models/transwcd_iter_28000.pth", type=str, help="model_path")
+parser.add_argument("--model_path", required=True, type=str, help="model_path")
 
 parser.add_argument("--pooling", default="gmp", type=str, help="pooling method")
 parser.add_argument("--bkg_score", default=0.45, type=float, help="bkg_score")

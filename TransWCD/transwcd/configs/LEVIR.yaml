@@ -3,10 +3,10 @@ backbone:
   stride: [4, 2, 2, 1]
   comments: None
 
-scheme: transwcd_single # transwcd_single, transwcd_dual
+scheme: transwcd_dual #transwcd_single, transwcd_dl_single, transwcd_dl_dual
 
 dataset:
-  root_dir: /data/zhenghui.zhao/Dataset/Change Detection/LEVIR-CD-256
+  root_dir: E:\weakly_CD_dataset\dataset\Levir_CDC_dataset\Levir_CDC_dataset_converted
   name_list_dir: datasets/LEVIR
   num_classes: 2
   crop_size: 256
