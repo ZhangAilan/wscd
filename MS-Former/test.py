@@ -163,8 +163,8 @@ def val_change_detection(args):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('--test_data_root', type=str, required=True, help='Testing data directory')
-    parser.add_argument('--test_list_file', type=str, default=None, help='Testing list file path')
+    parser.add_argument('--test_data_root', type=str, default='D:\project\CD\Dataset\whu_CDC_dataset\images', help='Testing data directory')
+    parser.add_argument('--test_list_file', type=str, default="D:\project\CD\Dataset\whu_CDC_dataset_converted\list\test.txt", help='Testing list file path')
     parser.add_argument('--inWidth', type=int, default=256, help='Width of RGB image')
     parser.add_argument('--inHeight', type=int, default=256, help='Height of RGB image')
     parser.add_argument('--patch_size', type=int, default=64, help='size of label patch')
