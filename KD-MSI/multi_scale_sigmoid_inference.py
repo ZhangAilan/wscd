@@ -31,7 +31,7 @@ from tools.ai.augment_utils import *
 def get_cam(ori_imageA,ori_imageB, scale):
         # preprocessing
         image = copy.deepcopy(ori_imageA)
-        image = image.resize((round(ori_w*scale), round(ori_h*scale)), resample=PIL.Image.CUBIC)
+        image = image.resize((round(ori_w*scale), round(ori_h*scale)), resample=PIL.Image.BICUBIC)
         
         image = normalize_fn(image)
         image = image.transpose((2, 0, 1))
@@ -43,7 +43,7 @@ def get_cam(ori_imageA,ori_imageB, scale):
         imagesA = images
 
         image = copy.deepcopy(ori_imageB)
-        image = image.resize((round(ori_w*scale), round(ori_h*scale)), resample=PIL.Image.CUBIC)
+        image = image.resize((round(ori_w*scale), round(ori_h*scale)), resample=PIL.Image.BICUBIC)
         
         image = normalize_fn(image)
         image = image.transpose((2, 0, 1))
