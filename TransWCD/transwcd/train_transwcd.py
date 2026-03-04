@@ -195,13 +195,14 @@ def train(cfg):
     bkg_cls = torch.ones(size=(cfg.train.batch_size, 1))
 
     best_F1 = 0.0
+    best_iter = 0
     for n_iter in range(cfg.train.max_iters):
 
         try:
             img_name, inputs_A, inputs_B, cls_labels, img_box = next(train_loader_iter)
         except:
             train_loader_iter = iter(train_loader)
-            img_name, inputs_A, inputs_A, cls_labels, img_box = next(train_loader_iter)
+            img_name, inputs_A, inputs_B, cls_labels, img_box = next(train_loader_iter)
 
         inputs_A = inputs_A.to(device, non_blocking=True)
         inputs_B = inputs_B.to(device, non_blocking=True)
