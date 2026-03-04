@@ -262,16 +262,17 @@ def train(cfg):
             ckpt_name = os.path.join(cfg.work_dir.ckpt_dir, "transwcd_iter_%d.pth" % (n_iter + 1))
             logging.info('CD Validating...')
             torch.save(transwcd.state_dict(), ckpt_name)
-            cam_score, labels = validate(model=transwcd, data_loader=val_loader, cfg=cfg)  # _ 为 labels
+            print("CD Validation done.")
+            # cam_score, labels = validate(model=transwcd, data_loader=val_loader, cfg=cfg)  # _ 为 labels
 
-            if cam_score['f1'][1] > best_F1:
-                best_F1 = cam_score['f1'][1]
-                best_iter = n_iter + 1
-            logging.info("cams score: %s, \n[best_iter]: %s", cam_score, best_iter)
+            # if cam_score['f1'][1] > best_F1:
+            #     best_F1 = cam_score['f1'][1]
+            #     best_iter = n_iter + 1
+            # logging.info("cams score: %s, \n[best_iter]: %s", cam_score, best_iter)
 
-            if cam_score['f1'][1] > best_F1:
-                best_F1 = cam_score['f1'][1]
-                best_iter = n_iter + 1
+            # if cam_score['f1'][1] > best_F1:
+            #     best_F1 = cam_score['f1'][1]
+            #     best_iter = n_iter + 1
               
     return True
 
