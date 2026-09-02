@@ -3,6 +3,7 @@ __pycache__/
 ACWCD/pretrained/mit_b1.pth
 TransWCD/transwcd/pretrained/mit_b1.pth
 TransWCD/transwcd_sa/pretrained/mit_b1.pth
+TransWCD/transwcd_sa/TransWCD-SA/
 .vscode/
 
 TransWCD/transwcd/work_dir_WHU/
