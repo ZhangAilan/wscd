@@ -1,5 +1,5 @@
 backbone:
-  config: mit_b1
+  config: dinov3_vith16plus
   stride: [4, 2, 2, 1]
   comments: None
 
