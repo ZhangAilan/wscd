@@ -26,6 +26,7 @@ train:
   cam_iters: 4000
   eval_iters: 1000
   log_iters: 1000
+  save_iters: 1000
   samples_per_gpu: 1
 
 cam:

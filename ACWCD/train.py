@@ -242,7 +242,19 @@ def train(cfg):
     best_F1_pseudo_labels = 0.0
     best_iter_seg = 0.0
     best_iter_pseudo_labels = 0.0
-    for n_iter in range(cfg.train.max_iters):
+    save_iters = int(cfg.train.get('save_iters', cfg.train.eval_iters))
+    if save_iters <= 0:
+        raise ValueError('train.save_iters must be greater than 0')
+
+    progress_bar = tqdm(
+        range(cfg.train.max_iters),
+        total=cfg.train.max_iters,
+        desc='Training',
+        unit='iter',
+        dynamic_ncols=True,
+    )
+
+    for n_iter in progress_bar:
 
         try:
             img_name, inputs_A, inputs_B, cls_labels, img_box = next(train_loader_iter)
@@ -325,9 +337,35 @@ def train(cfg):
             pseudo_label = pseudo_label.cpu().numpy().astype(np.int16)
             final_gts = final_pseudo_labels.cpu().numpy().astype(np.int16)
 
-            logging.info(
-                "Iter: %d; Elasped: %s; ETA: %s; LR: %.3e; lp_loss: %.4f, cp_loss1: %.4f, seg_loss: %.4f, cp_loss2: %.4f" % (
-                    n_iter + 1, delta, eta, cur_lr, avg_meter.pop('lp_loss'), avg_meter.pop('cp_loss1'), avg_meter.pop('seg_loss'), avg_meter.pop('cp_loss2')))
+            avg_lp_loss = avg_meter.pop('lp_loss')
+            avg_cp_loss1 = avg_meter.pop('cp_loss1')
+            avg_seg_loss = avg_meter.pop('seg_loss')
+            avg_cp_loss2 = avg_meter.pop('cp_loss2')
+            current_iter = n_iter + 1
+            progress_bar.set_postfix(
+                iter=f'{current_iter}/{cfg.train.max_iters}',
+                progress=f'{current_iter / cfg.train.max_iters:.1%}',
+                loss=f'{loss.item():.4f}',
+                lr=f'{cur_lr:.2e}',
+            )
+            progress_message = (
+                "训练进度: %d/%d (%.1f%%) | 已用时: %s | 预计剩余: %s | "
+                "LR: %.3e | lp_loss: %.4f | cp_loss1: %.4f | seg_loss: %.4f | cp_loss2: %.4f"
+                % (
+                    current_iter,
+                    cfg.train.max_iters,
+                    current_iter / cfg.train.max_iters * 100,
+                    delta,
+                    eta,
+                    cur_lr,
+                    avg_lp_loss,
+                    avg_cp_loss1,
+                    avg_seg_loss,
+                    avg_cp_loss2,
+                )
+            )
+            logging.info(progress_message)
+            print(progress_message, flush=True)
 
             grid_imgs_A, grid_cam_A = imutils.tensorboard_image(imgs=inputs_A.clone(), cam=valid_cam)
             grid_imgs_B, grid_cam_B = imutils.tensorboard_image(imgs=inputs_B.clone(), cam=valid_cam)
@@ -352,12 +390,12 @@ def train(cfg):
             writer.add_scalars('train/loss', {"lp_loss": lp_loss.item(), "cp_loss1": cp_loss1.item(), "seg_loss": seg_loss.item(),"cp_loss2": cp_loss2.item()},
                                global_step=n_iter)
 
-        if n_iter + 1 == cfg.train.max_iters:
-
-            ckpt_name = os.path.join(cfg.work_dir.ckpt_dir, "acwcd_iter_%d.pth" % (n_iter + 1))
-            logging.info('Saving final checkpoint...')
+        current_iter = n_iter + 1
+        if current_iter % save_iters == 0 or current_iter == cfg.train.max_iters:
+            ckpt_name = os.path.join(cfg.work_dir.ckpt_dir, "acwcd_iter_%d.pth" % current_iter)
+            logging.info('Saving checkpoint at iteration %d...', current_iter)
             torch.save(acwcd.state_dict(), ckpt_name)
-            print("Model saved to %s" % ckpt_name)
+            print("权重已保存: %s" % ckpt_name, flush=True)
             # seg_score, pseudo_labels_score, _ = validate(model=acwcd, data_loader=val_loader, cfg=cfg)  # _ 为 labels
 
             # if seg_score['f1'][1] > best_F1_seg:
