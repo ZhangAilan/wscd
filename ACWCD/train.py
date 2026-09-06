@@ -352,10 +352,10 @@ def train(cfg):
             writer.add_scalars('train/loss', {"lp_loss": lp_loss.item(), "cp_loss1": cp_loss1.item(), "seg_loss": seg_loss.item(),"cp_loss2": cp_loss2.item()},
                                global_step=n_iter)
 
-        if (n_iter + 1) % cfg.train.eval_iters == 0:
+        if n_iter + 1 == cfg.train.max_iters:
 
             ckpt_name = os.path.join(cfg.work_dir.ckpt_dir, "acwcd_iter_%d.pth" % (n_iter + 1))
-            logging.info('CD Validating...')
+            logging.info('Saving final checkpoint...')
             torch.save(acwcd.state_dict(), ckpt_name)
             print("Model saved to %s" % ckpt_name)
             # seg_score, pseudo_labels_score, _ = validate(model=acwcd, data_loader=val_loader, cfg=cfg)  # _ 为 labels
