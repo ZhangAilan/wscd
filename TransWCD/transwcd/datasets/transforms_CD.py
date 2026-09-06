@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from PIL import Image
-import mmcv
+import cv2
 
 
 def normalize_img(img, mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375]):
@@ -221,22 +221,22 @@ class PhotoMetricDistortion(object):
     def saturation(self, img):
         """Saturation distortion."""
         if np.random.randint(2):
-            img = mmcv.bgr2hsv(img)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
             img[:, :, 1] = self.convert(
                 img[:, :, 1],
                 alpha=random.uniform(self.saturation_lower,
                                      self.saturation_upper))
-            img = mmcv.hsv2bgr(img)
+            img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
         return img
 
     def hue(self, img):
         """Hue distortion."""
         if np.random.randint(2):
-            img = mmcv.bgr2hsv(img)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
             img[:, :,
                 0] = (img[:, :, 0].astype(int) +
                       np.random.randint(-self.hue_delta, self.hue_delta)) % 180
-            img = mmcv.hsv2bgr(img)
+            img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
         return img
 
     def __call__(self, img):

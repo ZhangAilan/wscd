@@ -3,7 +3,6 @@ import sys
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
-from mmcv.cnn import ConvModule
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -33,11 +32,15 @@ class SimpleSeg(nn.Module):
 
         self.dropout = nn.Dropout2d(0.1)
 
-        self.linear_fuse = ConvModule(
-            in_channels=embedding_dim,
-            out_channels=embedding_dim,
-            kernel_size=1,
-            norm_cfg=dict(type='BN', requires_grad=True)
+        self.linear_fuse = nn.Sequential(
+            nn.Conv2d(
+                in_channels=embedding_dim,
+                out_channels=embedding_dim,
+                kernel_size=1,
+                bias=False,
+            ),
+            nn.BatchNorm2d(embedding_dim),
+            nn.ReLU(inplace=True),
         )
 
         self.linear_pred = nn.Conv2d(embedding_dim, self.num_classes, kernel_size=1)
