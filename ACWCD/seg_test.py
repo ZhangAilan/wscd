@@ -28,8 +28,6 @@ parser.add_argument("--bkg_score", default=0.50, type=float, help="bkg_score")
 parser.add_argument("--resize_long", default=256, type=int, help="resize the long side (256 or 512)")
 
 def test(model, dataset, test_scales=1.0):
-    _preds, _gts = [], []
-
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=cfg.test.batch_size, shuffle=False, num_workers=2,
                                               pin_memory=False)
 
@@ -81,11 +79,10 @@ def test(model, dataset, test_scales=1.0):
                     _segs = (_segs_cat[0, ...] + _segs_cat[1, ...].flip(-1)) / 2
                     segs_list.append(_segs)
 
-            resized_segs = F.interpolate(segs, size=labels.shape[1:], mode='bilinear', align_corners=False)
+            # Average all scale and flip predictions before converting logits to labels.
+            fused_segs = torch.stack(segs_list, dim=0).mean(dim=0, keepdim=True)
+            resized_segs = F.interpolate(fused_segs, size=labels.shape[1:], mode='bilinear', align_corners=False)
             seg_preds = torch.argmax(resized_segs, dim=1)
-
-            _preds += list(seg_preds.cpu().numpy().astype(np.int16))
-            _gts += list(labels.cpu().numpy().astype(np.int16))
 
             # ``name`` already contains the source image extension (for example
             # ``test_000024.png``), so appending another ``.png`` produces
@@ -121,7 +118,59 @@ def test(model, dataset, test_scales=1.0):
             label_with_fn_fp_img_preds = Image.fromarray(label_rgb1)
             label_with_fn_fp_img_preds.save(label_with_fn_fp_path_preds)
 
-        return inputs_A, inputs_B, _gts, _preds
+        return inputs_A, inputs_B
+
+
+def _load_single_channel_label(image_path):
+    """Read binary label images while rejecting ambiguous multi-channel files."""
+    label = np.asarray(Image.open(image_path))
+    if label.ndim == 3:
+        if not np.all(label == label[..., :1]):
+            raise ValueError(f"Expected a grayscale binary label image: {image_path}")
+        label = label[..., 0]
+    if label.ndim != 2:
+        raise ValueError(f"Expected a 2D label image: {image_path}")
+    return label
+
+
+def load_saved_predictions_and_labels(dataset, prediction_dir):
+    """Load the exact PNG predictions saved by this script and their matching labels."""
+    predictions, gts = [], []
+    missing_predictions = []
+
+    for name in dataset.name_list:
+        filename = os.path.splitext(os.path.basename(str(name)))[0] + ".png"
+        prediction_path = os.path.join(prediction_dir, filename)
+        label_path = os.path.join(dataset.label_dir, str(name))
+
+        if not os.path.isfile(prediction_path):
+            missing_predictions.append(prediction_path)
+            continue
+        if not os.path.isfile(label_path):
+            raise FileNotFoundError(f"Label file not found: {label_path}")
+
+        prediction = _load_single_channel_label(prediction_path)
+        label = _load_single_channel_label(label_path)
+        if prediction.shape != label.shape:
+            raise ValueError(
+                f"Prediction/label size mismatch for {filename}: "
+                f"{prediction.shape} vs {label.shape}"
+            )
+
+        # Support common binary encodings (0/1 and 0/255) without inheriting
+        # the dataset transform's unconditional ``label // 255`` conversion.
+        predictions.append((prediction > 0).astype(np.int16))
+        gts.append((label > 0).astype(np.int16))
+
+    if missing_predictions:
+        examples = "\n".join(missing_predictions[:5])
+        raise FileNotFoundError(
+            f"Missing {len(missing_predictions)} prediction files in {prediction_dir}.\n{examples}"
+        )
+    if not predictions:
+        raise RuntimeError(f"No prediction files found in {prediction_dir}")
+
+    return predictions, gts
 
 
 def calculate_metrics(predictions, gts, num_classes=2):
@@ -217,9 +266,11 @@ def main(cfg):
     acwcd.load_state_dict(state_dict=new_state_dict, strict=True)  # True
     acwcd.eval()
 
-    inputs_A, inputs_B, _gts, _preds = test(model=acwcd, dataset=test_dataset, test_scales=[1, 0.5, 0.75])
+    test(model=acwcd, dataset=test_dataset, test_scales=[1, 0.5, 0.75])
     torch.cuda.empty_cache()
 
+    prediction_dir = os.path.join(args.save_dir, "seg-prediction")
+    _preds, _gts = load_saved_predictions_and_labels(test_dataset, prediction_dir)
     metrics = calculate_metrics(_preds, _gts)
     metrics_path = os.path.join(args.save_dir, "metrics.txt")
     save_metrics(metrics, metrics_path)
