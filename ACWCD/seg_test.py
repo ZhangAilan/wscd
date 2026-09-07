@@ -118,6 +118,67 @@ def test(model, dataset, test_scales=1.0):
         return inputs_A, inputs_B, _gts, _preds
 
 
+def calculate_metrics(predictions, gts, num_classes=2):
+    """Calculate the same nine metrics used by the reference evaluation script."""
+    hist = np.zeros((num_classes, num_classes), dtype=np.float64)
+
+    for prediction, gt in zip(predictions, gts):
+        prediction = prediction.flatten()
+        gt = gt.flatten()
+        valid = (gt >= 0) & (gt < num_classes)
+        hist += np.bincount(
+            num_classes * gt[valid].astype(int) + prediction[valid].astype(int),
+            minlength=num_classes ** 2,
+        ).reshape(num_classes, num_classes)
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        iou = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
+        acc = np.diag(hist).sum() / hist.sum()
+        acc_cls = np.nanmean(np.diag(hist) / hist.sum(axis=1))
+        freq = hist.sum(axis=1) / hist.sum()
+        fwavacc = (freq[freq > 0] * iou[freq > 0]).sum()
+
+        precision = hist[1, 1] / (hist[0, 1] + hist[1, 1])
+        recall = hist[1, 1] / (hist[1, 0] + hist[1, 1])
+        accuracy = (hist[0, 0] + hist[1, 1]) / hist.sum()
+        f1_score = 2 * precision * recall / (precision + recall)
+
+    return {
+        "acc": acc,
+        "acc_cls": acc_cls,
+        "iou": iou,
+        "miou": np.nanmean(iou),
+        "fwavacc": fwavacc,
+        "class_accuracy": precision,
+        "class_recall": recall,
+        "accuracy": accuracy,
+        "f1_score": f1_score,
+    }
+
+
+def save_metrics(metrics, output_path):
+    lines = [
+        "=" * 50,
+        "Accuracy Metrics Results:",
+        "=" * 50,
+        f"Overall Accuracy:            {metrics['acc']:.4f}",
+        f"Class Average Accuracy:      {metrics['acc_cls']:.4f}",
+        f"IoU per class:               {metrics['iou']}",
+        f"Mean IoU:                    {metrics['miou']:.4f}",
+        f"Frequency Weighted Accuracy: {metrics['fwavacc']:.4f}",
+        f"Class Precision:             {metrics['class_accuracy']:.4f}",
+        f"Class Recall:                {metrics['class_recall']:.4f}",
+        f"Accuracy:                    {metrics['accuracy']:.4f}",
+        f"F1 Score:                    {metrics['f1_score']:.4f}",
+        "=" * 50,
+    ]
+    result_text = "\n".join(lines)
+    print(result_text)
+
+    with open(output_path, "w", encoding="utf-8") as file:
+        file.write(result_text + "\n")
+
+
 def main(cfg):
     test_dataset = weaklyCD.CDDataset(
         root_dir=cfg.dataset.root_dir,
@@ -153,10 +214,10 @@ def main(cfg):
     inputs_A, inputs_B, _gts, _preds = test(model=acwcd, dataset=test_dataset, test_scales=[1, 0.5, 0.75])
     torch.cuda.empty_cache()
 
-    preds_score = evaluate_CD.scores(_gts, _preds)
-
-    print(" preds score:")
-    print( preds_score)
+    metrics = calculate_metrics(_preds, _gts)
+    metrics_path = os.path.join(args.save_dir, "metrics.txt")
+    save_metrics(metrics, metrics_path)
+    print(f"Metrics saved to: {metrics_path}")
 
     return True
 
