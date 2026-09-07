@@ -87,7 +87,11 @@ def test(model, dataset, test_scales=1.0):
             _preds += list(seg_preds.cpu().numpy().astype(np.int16))
             _gts += list(labels.cpu().numpy().astype(np.int16))
 
-            _preds_path = args.save_dir + '/seg-prediction/' + name[0] + '.png'
+            # ``name`` already contains the source image extension (for example
+            # ``test_000024.png``), so appending another ``.png`` produces
+            # filenames such as ``test_000024.png.png``.
+            output_name = os.path.splitext(os.path.basename(name[0]))[0] + '.png'
+            _preds_path = os.path.join(args.save_dir, 'seg-prediction', output_name)
 
             _preds_img = Image.fromarray((seg_preds.squeeze().cpu().numpy() * 255).astype(np.uint8))
 
@@ -111,7 +115,9 @@ def test(model, dataset, test_scales=1.0):
             label_rgb1[fp_pixels1] = [255, 0, 0]  # Red
 
             # Save the labeled image
-            label_with_fn_fp_path_preds = args.save_dir + '/seg-prediction-color/' + name[0] + '.png'
+            label_with_fn_fp_path_preds = os.path.join(
+                args.save_dir, 'seg-prediction-color', output_name
+            )
             label_with_fn_fp_img_preds = Image.fromarray(label_rgb1)
             label_with_fn_fp_img_preds.save(label_with_fn_fp_path_preds)
 
