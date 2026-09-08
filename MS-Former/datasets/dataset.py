@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import torch.utils.data
+import os
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -14,13 +15,16 @@ class Dataset(torch.utils.data.Dataset):
         file_root: root of data_path, e.g. ./data/
         list_file: optional path to list file, if None, use default path
         """
+        # Support both the original <root>/<split>/A layout and a flat converted
+        # dataset root containing A/, B/, label/, and list/ directly.
+        data_root = file_root if os.path.isdir(os.path.join(file_root, 'A')) else os.path.join(file_root, dataset)
         if list_file is None:
-            list_file = file_root + '/' + dataset + '/list/' + dataset + '.txt'
+            list_file = os.path.join(data_root, 'list', dataset + '.txt')
         self.file_list = open(list_file).read().splitlines()
-        self.pre_images = [file_root + '/' + dataset + '/A/' + x for x in self.file_list]
-        self.post_images = [file_root + '/' + dataset + '/B/' + x for x in self.file_list]
+        self.pre_images = [os.path.join(data_root, 'A', x) for x in self.file_list]
+        self.post_images = [os.path.join(data_root, 'B', x) for x in self.file_list]
         self.label_patch_size = label_patch_size
-        self.gts = [file_root + '/' + dataset + '/label/' + x for x in self.file_list]
+        self.gts = [os.path.join(data_root, 'label', x) for x in self.file_list]
         self.transform = transform
 
     def __len__(self):

@@ -25,6 +25,11 @@ This repository contains a Python implementation of our paper [MS-Former](https:
     - Creating a virtual environment in the terminal: `conda create -n MS-Former python=3.8`
     - Installing necessary packages: `pip install -r requirements.txt`
 
++ DINOv3 ViT-H+/16 backbone:
+    - MS-Former now uses the local `../dinov3` source tree and the DINOv3 ViT-H+/16 checkpoint by default.
+    - The default checkpoint is `E:\zyh-dinov3-wcd\dino\dinov3_vith16plus_pretrain_lvd1689m-7c1da9a5.pth`. Override it with `--dino_ckpt_path <path>` or `DINO_CKPT_PATH=<path>`.
+    - Input height and width must be divisible by 16. DINOv3 is frozen; the MS-Former decoder and attention modules remain trainable.
+
 + Train/Test
     - `sh train.sh`
     - `sh test.sh`

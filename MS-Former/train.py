@@ -189,7 +189,7 @@ def train_val_change_detection(args):
     torch.manual_seed(SEED)
     torch.cuda.manual_seed(SEED)
 
-    model = get_model(args.patch_size, args.memory_length, args.depth)
+    model = get_model(args.patch_size, args.memory_length, args.depth, args.dino_ckpt_path)
 
     args.save_dir = args.save_dir + '_iter_' + str(args.max_steps) + '_lr_' + str(
         args.lr) + '_p_' + str(args.patch_size) + '_m_' + str(args.memory_length) + '_d_' + str(args.depth) + '/'
@@ -242,7 +242,7 @@ def train_val_change_detection(args):
     )
     testLoader = torch.utils.data.DataLoader(
         test_data, shuffle=False,
-        batch_size=args.batch_size // 4, num_workers=args.num_workers, pin_memory=False
+        batch_size=max(1, args.batch_size // 4), num_workers=args.num_workers, pin_memory=False
     )
 
     max_batches = len(trainLoader)
@@ -325,11 +325,15 @@ def train_val_change_detection(args):
 
 
 if __name__ == '__main__':
+    dataset_root = r'E:\weakly_CD_dataset\dataset\whu_CDC_dataset\whu_CDC_dataset_converted'
+    dino_ckpt_path = r'E:\zyh-dinov3-wcd\dino\dinov3_vith16plus_pretrain_lvd1689m-7c1da9a5.pth'
     parser = ArgumentParser()
-    parser.add_argument('--train_data_root', type=str, required=True, help='Training data directory')
-    parser.add_argument('--test_data_root', type=str, required=True, help='Testing data directory')
-    parser.add_argument('--train_list_file', type=str, default=None, help='Training list file path')
-    parser.add_argument('--test_list_file', type=str, default=None, help='Testing list file path')
+    parser.add_argument('--train_data_root', type=str, default=dataset_root, help='Training data directory')
+    parser.add_argument('--test_data_root', type=str, default=dataset_root, help='Validation data directory')
+    parser.add_argument('--train_list_file', type=str, default=os.path.join(dataset_root, 'list', 'train.txt'),
+                        help='Training list file path')
+    parser.add_argument('--test_list_file', type=str, default=os.path.join(dataset_root, 'list', 'val.txt'),
+                        help='Validation list file path')
     parser.add_argument('--inWidth', type=int, default=256, help='Width of RGB image')
     parser.add_argument('--inHeight', type=int, default=256, help='Height of RGB image')
     parser.add_argument('--patch_size', type=int, default=16, help='size of label patch')
@@ -337,8 +341,8 @@ if __name__ == '__main__':
     parser.add_argument('--depth', type=int, default=2, help='size of label patch')
     parser.add_argument('--max_steps', type=int, default=20000, help='Max. number of iterations')
     parser.add_argument('--num_workers', type=int, default=4, help='No. of parallel threads')
-    parser.add_argument('--batch_size', type=int, default=4, help='Batch size')
-    parser.add_argument('--lr', type=float, default=5e-4, help='Initial learning rate')
+    parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
+    parser.add_argument('--lr', type=float, default=4e-5, help='Initial learning rate')
     parser.add_argument('--lr_mode', default='poly', help='Learning rate policy')
     parser.add_argument('--save_dir', default='./weights/', help='Directory to save the results')
     parser.add_argument('--logFile', default='trainValLog.txt',
@@ -346,6 +350,8 @@ if __name__ == '__main__':
     parser.add_argument('--onGPU', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='Run on CPU or GPU. If TRUE, then GPU.')
     parser.add_argument('--weight', default='', type=str, help='pretrained weight, can be a non-strict copy')
+    parser.add_argument('--dino_ckpt_path', default=dino_ckpt_path, type=str,
+                        help='DINOv3 ViT-H+/16 checkpoint; overrides DINO_CKPT_PATH and the project default')
     parser.add_argument('--ms', type=int, default=0, help='apply multi-scale training, default False')
 
     args = parser.parse_args()
