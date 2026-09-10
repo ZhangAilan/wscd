@@ -69,28 +69,31 @@ class PyramidPoolingModule(nn.Module):
         super(PyramidPoolingModule, self).__init__()
         if pool_scales is None:
             pool_scales = [1, 2, 3, 6]
+        # A 1x1 pooled feature has only one value per channel. GroupNorm avoids
+        # BatchNorm's batch-size/spatial-size restriction for batch_size=1.
+        norm = lambda: nn.GroupNorm(num_groups=min(32, channel), num_channels=channel)
         self.pool_scale_1 = nn.Sequential(
             nn.AdaptiveAvgPool2d(pool_scales[0]),
             nn.Conv2d(in_channel, channel, kernel_size=1),
-            nn.BatchNorm2d(channel),
+            norm(),
             nn.ReLU(inplace=True)
         )
         self.pool_scale_2 = nn.Sequential(
             nn.AdaptiveAvgPool2d(pool_scales[1]),
             nn.Conv2d(in_channel, channel, kernel_size=1),
-            nn.BatchNorm2d(channel),
+            norm(),
             nn.ReLU(inplace=True)
         )
         self.pool_scale_3 = nn.Sequential(
             nn.AdaptiveAvgPool2d(pool_scales[2]),
             nn.Conv2d(in_channel, channel, kernel_size=1),
-            nn.BatchNorm2d(channel),
+            norm(),
             nn.ReLU(inplace=True)
         )
         self.pool_scale_4 = nn.Sequential(
             nn.AdaptiveAvgPool2d(pool_scales[3]),
             nn.Conv2d(in_channel, channel, kernel_size=1),
-            nn.BatchNorm2d(channel),
+            norm(),
             nn.ReLU(inplace=True)
         )
         self.fusion_conv = nn.Sequential(
