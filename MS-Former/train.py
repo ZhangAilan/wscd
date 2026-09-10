@@ -91,6 +91,8 @@ def train(args, train_loader, model, optimizer, epoch, max_batches, cur_iter=0, 
     epoch_loss = []
 
     for iter, batched_inputs in enumerate(train_loader):
+        if iter + cur_iter >= args.max_steps:
+            break
 
         img, patch_target, target = batched_inputs
         #
@@ -118,7 +120,11 @@ def train(args, train_loader, model, optimizer, epoch, max_batches, cur_iter=0, 
 
         seg_loss_1 = seg_loss(change_mask_aux, target_var_down)
         seg_loss_2 = torch.abs(change_mask - patch_target_var)
-        seg_loss_2 = torch.mean(seg_loss_2[patch_target_var == 0])
+        # Some patches can be entirely changed, leaving no background pixels.
+        # torch.mean on that empty selection returns NaN.
+        background_error = seg_loss_2[patch_target_var == 0]
+        seg_loss_2 = (background_error.mean() if background_error.numel() else
+                      change_mask.new_zeros(()))
         b, n, h, w = region_mask.size()
         seg_loss_3 = 0
         for i in range(n):
@@ -126,8 +132,10 @@ def train(args, train_loader, model, optimizer, epoch, max_batches, cur_iter=0, 
 
         loss = seg_loss_1 + seg_loss_2 + seg_loss_3
 
-        #
         optimizer.zero_grad()
+        if not torch.isfinite(loss):
+            print('\nSkipping non-finite loss at iteration %d.' % (iter + cur_iter), flush=True)
+            continue
         loss.backward()
         optimizer.step()
 
@@ -167,12 +175,14 @@ def train(args, train_loader, model, optimizer, epoch, max_batches, cur_iter=0, 
 
 
 def adjust_learning_rate(args, optimizer, iter, max_batches, lr_factor=1):
-    max_iter = max_batches * args.max_epochs
+    # Use the requested number of steps, rather than the rounded-up epoch count.
+    max_iter = args.max_steps
     warm_up_iter = np.floor(max_iter * 0.1)
     if args.lr_mode == 'poly':
-        cur_iter = iter - warm_up_iter
-        max_iter = max_iter - warm_up_iter
-        lr = args.lr * (1 - cur_iter * 1.0 / max_iter) ** 0.9
+        cur_iter = max(0, iter - warm_up_iter)
+        decay_iters = max(1, max_iter - warm_up_iter)
+        progress = min(1.0, cur_iter / decay_iters)
+        lr = args.lr * (1 - progress) ** 0.9
     else:
         raise ValueError('Unknown lr mode {}'.format(args.lr_mode))
     if iter < warm_up_iter:
@@ -254,7 +264,7 @@ def train_val_change_detection(args):
     args.max_epochs = int(np.ceil(args.max_steps / max_batches))
     start_epoch = 0
     cur_iter = 0
-    loss_lowest = 10
+    loss_lowest = float('inf')
 
     logFileLoc = args.save_dir + args.logFile
     if os.path.isfile(logFileLoc):
@@ -270,7 +280,7 @@ def train_val_change_detection(args):
 
     for epoch in range(start_epoch, args.max_epochs):
         lossTr, score_tr, lr = train(args, trainLoader, model, optimizer, epoch, max_batches, cur_iter)
-        cur_iter += len(trainLoader)
+        cur_iter = min(args.max_steps, cur_iter + len(trainLoader))
 
         torch.cuda.empty_cache()
 
@@ -292,7 +302,7 @@ def train_val_change_detection(args):
 
         # save the model
         model_file_name = args.save_dir + 'best_model.pth'
-        if loss_lowest >= lossTr:
+        if np.isfinite(lossTr) and loss_lowest >= lossTr:
             loss_lowest = lossTr
             torch.save(model.state_dict(), model_file_name)
 
@@ -301,9 +311,15 @@ def train_val_change_detection(args):
               % (epoch, lossTr, score_tr['F1'])
               )
 
+        if cur_iter >= args.max_steps:
+            break
+
     # save the model of last epoch
     lost_model_file_name = args.save_dir + 'last_model.pth'
     torch.save(model.state_dict(), lost_model_file_name)
+    if not os.path.isfile(model_file_name):
+        print('No finite epoch loss was recorded; using last_model.pth as best_model.pth.', flush=True)
+        torch.save(model.state_dict(), model_file_name)
     #
     state_dict = torch.load(model_file_name)
     model.load_state_dict(state_dict)
