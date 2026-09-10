@@ -98,7 +98,9 @@ class WCDNet(nn.Module):
         self.memory_length = memory_length
         self.depth = depth
         # DINOv3's four selected transformer stages replace the ResNet-18 feature extractor.
-        channels = [128, 128, 128, 128]
+        # FPN keeps the original ResNet-style five-entry channel contract;
+        # its first entry is unused because MS-Former consumes c2-c5.
+        channels = [128, 128, 128, 128, 128]
         self.context_encoder = DINOv3FeaturePyramid(
             ckpt_path=dino_ckpt_path,
             out_channels=channels[0],
