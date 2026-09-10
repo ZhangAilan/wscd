@@ -151,6 +151,15 @@ class WCDNet(nn.Module):
         change_mask_aux = F.adaptive_max_pool2d(mask, (size[0] // self.patch_size, size[1] // self.patch_size))
         change_mask_aux = torch.sigmoid(change_mask_aux)
         region_mask = torch.cat(region_mask, dim=1)
+        # DINOv3 features are produced on a 1/16 patch grid, while the legacy
+        # memory pooling path can be coarser. Match the patch-level supervision
+        # resolution before applying the auxiliary region losses.
+        region_mask = F.interpolate(
+            region_mask,
+            size=(size[0] // self.patch_size, size[1] // self.patch_size),
+            mode='bilinear',
+            align_corners=True,
+        )
         region_mask = torch.sigmoid(region_mask)
 
         if test_mode:
