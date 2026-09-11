@@ -194,7 +194,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
     parser.add_argument('--lr', type=float, default=4e-5, help='Initial learning rate')
     parser.add_argument('--lr_mode', default='poly', help='Learning rate policy')
-    parser.add_argument('--save_dir', default='./weights/', help='Directory to save the results')
+    parser.add_argument('--save_dir', default='./weights/whu/', help='Directory to save the results')
     parser.add_argument('--logFile', default='trainValLog.txt',
                         help='File that stores the training and validation logs')
     parser.add_argument('--onGPU', default=True, type=lambda x: (str(x).lower() == 'true'),
