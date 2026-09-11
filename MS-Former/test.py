@@ -17,6 +17,75 @@ from argparse import ArgumentParser
 from models.model import get_model
 
 
+def calculate_binary_metrics(label_dir, prediction_dir, file_names):
+    """Calculate dataset-level metrics from saved binary predictions and labels."""
+    confusion_matrix = np.zeros((2, 2), dtype=np.int64)
+    evaluated = 0
+    skipped = []
+
+    for file_name in file_names:
+        label_path = os.path.join(label_dir, file_name)
+        prediction_path = os.path.join(prediction_dir, file_name)
+        if not os.path.isfile(label_path) or not os.path.isfile(prediction_path):
+            skipped.append(file_name)
+            continue
+
+        label = np.asarray(Image.open(label_path).convert('L')) > 0
+        prediction = np.asarray(Image.open(prediction_path).convert('L')) > 0
+        if label.shape != prediction.shape:
+            raise ValueError(
+                f"Prediction/label size mismatch for {file_name}: "
+                f"{prediction.shape} versus {label.shape}."
+            )
+
+        encoded = 2 * label.astype(np.uint8).ravel() + prediction.astype(np.uint8).ravel()
+        confusion_matrix += np.bincount(encoded, minlength=4).reshape(2, 2)
+        evaluated += 1
+
+    if evaluated == 0:
+        raise RuntimeError("No matching binary prediction and label image pairs were found.")
+
+    tn, fp = confusion_matrix[0]
+    fn, tp = confusion_matrix[1]
+    eps = np.finfo(np.float64).eps
+    total = confusion_matrix.sum()
+    overall_accuracy = (tp + tn) / (total + eps)
+    class_accuracy = np.diag(confusion_matrix) / (confusion_matrix.sum(axis=1) + eps)
+    iou = np.diag(confusion_matrix) / (
+        confusion_matrix.sum(axis=1) + confusion_matrix.sum(axis=0) - np.diag(confusion_matrix) + eps
+    )
+    frequency = confusion_matrix.sum(axis=1) / (total + eps)
+    precision = tp / (tp + fp + eps)
+    recall = tp / (tp + fn + eps)
+    f1 = 2 * precision * recall / (precision + recall + eps)
+    miou = iou.mean()
+    fwavacc = (frequency * iou).sum()
+    expected_accuracy = (
+        (tp + fn) * (tp + fp) + (tn + fp) * (tn + fn)
+    ) / ((total + eps) ** 2)
+    kappa = (overall_accuracy - expected_accuracy) / (1 - expected_accuracy + eps)
+
+    lines = [
+        "=" * 50,
+        "Binary Change Detection Metrics",
+        "=" * 50,
+        f"Evaluated image pairs:        {evaluated}",
+        f"Skipped image pairs:          {len(skipped)}",
+        f"Confusion matrix [[TN, FP], [FN, TP]]: {confusion_matrix.tolist()}",
+        f"Overall Accuracy:             {overall_accuracy:.4f}",
+        f"Class Average Accuracy:       {class_accuracy.mean():.4f}",
+        f"IoU per class [unchanged, changed]: {iou.tolist()}",
+        f"Mean IoU:                     {miou:.4f}",
+        f"Frequency Weighted Accuracy:  {fwavacc:.4f}",
+        f"Change Precision:             {precision:.4f}",
+        f"Change Recall:                {recall:.4f}",
+        f"Change F1:                    {f1:.4f}",
+        f"Kappa:                        {kappa:.4f}",
+        "=" * 50,
+    ]
+    return "\n".join(lines), skipped
+
+
 @torch.no_grad()
 def val(args, val_loader, model, vis_dir):
     model.eval()
@@ -162,6 +231,18 @@ def val_change_detection(args):
     model.load_state_dict(state_dict)
 
     score_test = val(args, testLoader, model, args.vis_dir)
+    report, skipped = calculate_binary_metrics(
+        label_dir=os.path.join(args.test_data_root, 'label'),
+        prediction_dir=args.binary_vis_dir,
+        file_names=test_data.file_list,
+    )
+    metrics_path = os.path.join(args.binary_vis_dir, 'binary_metrics.txt')
+    with open(metrics_path, 'w', encoding='utf-8') as metrics_file:
+        metrics_file.write(report + '\n')
+        if skipped:
+            metrics_file.write('Skipped files:\n' + '\n'.join(skipped) + '\n')
+    print('\n' + report)
+    print(f'Binary metrics saved to: {metrics_path}')
     torch.cuda.empty_cache()
     print("\nLEVIR_Test :\t Kappa (te) = %.4f\t IoU (te) = %.4f\t F1 (te) = %.4f\t R (te) = %.4f\t P (te) = %.4f" \
           % (score_test['Kappa'], score_test['IoU'], score_test['F1'], score_test['recall'], score_test['precision']))
