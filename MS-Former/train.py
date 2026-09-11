@@ -341,7 +341,7 @@ def train_val_change_detection(args):
 
 
 if __name__ == '__main__':
-    dataset_root = r'E:\weakly_CD_dataset\dataset\whu_CDC_dataset\whu_CDC_dataset_converted'
+    dataset_root = r'E:\weakly_CD_dataset\dataset\Levir_CDC_dataset\Levir_CDC_dataset_converted'
     dino_ckpt_path = r'E:\zyh-dinov3-wcd\dino\dinov3_vith16plus_pretrain_lvd1689m-7c1da9a5.pth'
     parser = ArgumentParser()
     parser.add_argument('--train_data_root', type=str, default=dataset_root, help='Training data directory')
@@ -360,7 +360,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
     parser.add_argument('--lr', type=float, default=4e-5, help='Initial learning rate')
     parser.add_argument('--lr_mode', default='poly', help='Learning rate policy')
-    parser.add_argument('--save_dir', default='./weights/whu/', help='Directory to save the results')
+    parser.add_argument('--save_dir', default='./weights/levir/', help='Directory to save the results')
     parser.add_argument('--logFile', default='trainValLog.txt',
                         help='File that stores the training and validation logs')
     parser.add_argument('--onGPU', default=True, type=lambda x: (str(x).lower() == 'true'),
