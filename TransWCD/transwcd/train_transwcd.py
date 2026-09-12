@@ -12,11 +12,15 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from datasets import weaklyCD
-import utils.evaluate_CD as evaluate_CD
-import utils.imutils as imutils
-from utils.AverageMeter import AverageMeter
-from utils.camutils_CD import cam_to_label,multi_scale_cam
-from utils.optimizer import PolyWarmupAdamW
+from training_utils import (
+    AverageMeter,
+    PolyWarmupAdamW,
+    cam_to_label,
+    multi_scale_cam,
+    scores,
+    tensorboard_image,
+    tensorboard_label,
+)
 from models.model_transwcd import TransWCD_dual, TransWCD_single
 from models.dino_backbone import DEFAULT_DINO_CKPT_PATH
 
@@ -95,7 +99,7 @@ def validate(model=None, data_loader=None, cfg=None):
             cams += list(cam_label.cpu().numpy().astype(np.int16))
             gts += list(labels.cpu().numpy().astype(np.int16))
 
-    cam_score = evaluate_CD.scores(gts, cams)
+    cam_score = scores(gts, cams)
     model.train()
     return cam_score, labels
 
@@ -250,10 +254,10 @@ def train(cfg):
                 "Iter: %d; Elasped: %s; ETA: %s; LR: %.3e; cc_loss: %.4f" % (
                     n_iter + 1, delta, eta, cur_lr, avg_meter.pop('cc_loss'),))
 
-            grid_imgs_A, grid_cam_A = imutils.tensorboard_image(imgs=inputs_A.clone(), cam=valid_cam)
-            grid_imgs_B, grid_cam_B = imutils.tensorboard_image(imgs=inputs_B.clone(), cam=valid_cam)
+            grid_imgs_A, grid_cam_A = tensorboard_image(imgs=inputs_A.clone(), cam=valid_cam)
+            grid_imgs_B, grid_cam_B = tensorboard_image(imgs=inputs_B.clone(), cam=valid_cam)
 
-            grid_pred_cam = imutils.tensorboard_label(labels=pred_cam)
+            grid_pred_cam = tensorboard_label(labels=pred_cam)
 
             writer.add_image("train/images_A"+str(img_name), grid_imgs_A, global_step=n_iter)
             writer.add_image("train/images_B"+str(img_name), grid_imgs_B, global_step=n_iter)

@@ -4,14 +4,13 @@ import argparse
 import os
 from collections import OrderedDict
 from PIL import Image
-from utils.camutils_CD import cam_to_label, multi_scale_cam
 import numpy as np
 import torch
 import torch.nn.functional as F
 from omegaconf import OmegaConf
 from tqdm import tqdm
 from datasets import weaklyCD
-import utils.evaluate_CD as evaluate_CD
+from training_utils import cam_to_label, multi_scale_cam, scores
 from models.model_transwcd import TransWCD_single, TransWCD_dual
 from models.dino_backbone import DEFAULT_DINO_CKPT_PATH
 
@@ -146,7 +145,7 @@ def main(cfg):
     torch.cuda.empty_cache()
 
 
-    cams_score = evaluate_CD.scores(gts, cams)
+    cams_score = scores(gts, cams)
 
     print("cams score:")
     print(cams_score)
