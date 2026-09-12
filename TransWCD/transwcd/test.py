@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from omegaconf import OmegaConf
 from tqdm import tqdm
 from datasets import weaklyCD
-from utils import evaluate_CD
+import utils.evaluate_CD as evaluate_CD
 from models.model_transwcd import TransWCD_single, TransWCD_dual
 from models.dino_backbone import DEFAULT_DINO_CKPT_PATH
 
