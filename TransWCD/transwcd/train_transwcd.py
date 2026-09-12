@@ -17,6 +17,7 @@ from utils.AverageMeter import AverageMeter
 from utils.camutils_CD import cam_to_label,multi_scale_cam
 from utils.optimizer import PolyWarmupAdamW
 from models.model_transwcd import TransWCD_dual, TransWCD_single
+from models.dino_backbone import DEFAULT_DINO_CKPT_PATH
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -32,6 +33,8 @@ parser.add_argument("--crop_size", default=256, type=int, help="crop_size")
 parser.add_argument("--scheme", default='transwcd_dual', type=str, help="transwcd_dual or transwcd_single")
 parser.add_argument('--pretrained', default= True, type=bool, help="pretrained")
 parser.add_argument('--checkpoint_path', default= False, type=str, help="checkpoint_path" )
+parser.add_argument('--dino_ckpt_path', default=os.environ.get('DINO_CKPT_PATH', DEFAULT_DINO_CKPT_PATH), type=str,
+                    help="DINOv3 ViT-H+/16 checkpoint path")
 
 def setup_seed(seed):
     torch.manual_seed(seed)
@@ -144,14 +147,16 @@ def train(cfg):
                                  num_classes=cfg.dataset.num_classes,
                                  embedding_dim=256,
                                  pretrained=args.pretrained,
-                                 pooling=args.pooling, )
+                                 pooling=args.pooling,
+                                 dino_ckpt_path=args.dino_ckpt_path, )
     elif cfg.scheme == "transwcd_single":
         transwcd = TransWCD_single(backbone=cfg.backbone.config,
                                  stride=cfg.backbone.stride,
                                  num_classes=cfg.dataset.num_classes,
                                  embedding_dim=256,
                                  pretrained=args.pretrained,
-                                 pooling=args.pooling, )
+                                 pooling=args.pooling,
+                                 dino_ckpt_path=args.dino_ckpt_path, )
     else:
         print("Please choose a baseline structure in /configs/...yaml")
 
@@ -297,4 +302,3 @@ if __name__ == "__main__":
 
     setup_seed(1)
     train(cfg=cfg)
-

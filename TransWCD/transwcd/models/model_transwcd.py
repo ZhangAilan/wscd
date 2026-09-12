@@ -2,25 +2,32 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from . import mix_transformer
+from .dino_backbone import DINOv3Backbone
+
+
+def build_backbone(backbone, stride=None, dino_ckpt_path=None):
+    if backbone.startswith("dinov3"):
+        return DINOv3Backbone(ckpt_path=dino_ckpt_path)
+    return getattr(mix_transformer, backbone)(stride=stride)
 
 
 
 
 class TransWCD_dual(nn.Module):
-    def __init__(self, backbone, num_classes=None, embedding_dim=256, stride=None, pretrained=None, pooling=None, ):
+    def __init__(self, backbone, num_classes=None, embedding_dim=256, stride=None, pretrained=None, pooling=None, dino_ckpt_path=None, ):
         super().__init__()
         self.num_classes = num_classes
         self.embedding_dim = embedding_dim
-        self.feature_strides = [4, 8, 16, 32]
         self.stride = stride
 
-        self.encoder = getattr(mix_transformer, backbone)(stride=self.stride)
+        self.encoder = build_backbone(backbone, self.stride, dino_ckpt_path)
+        self.feature_strides = getattr(self.encoder, "strides", [4, 8, 16, 32])
         self.in_channels = self.encoder.embed_dims
 
         c1_in_channels, c2_in_channels, c3_in_channels, c4_in_channels = self.in_channels
 
         # initilize encoder
-        if pretrained:
+        if pretrained and not backbone.startswith("dinov3"):
             state_dict = torch.load('pretrained/' + backbone + '.pth')
             state_dict.pop('head.weight')
             state_dict.pop('head.bias')
@@ -52,6 +59,7 @@ class TransWCD_dual(nn.Module):
             else:
                 param_groups[0].append(param)
 
+        param_groups[0].extend(self.diff_c4.parameters())
         param_groups[2].append(self.classifier.weight)
 
         return param_groups
@@ -80,20 +88,20 @@ class TransWCD_dual(nn.Module):
 
 
 class TransWCD_single(nn.Module):
-    def __init__(self, backbone, num_classes=None, embedding_dim=256, stride=None, pretrained=None, pooling=None, ):
+    def __init__(self, backbone, num_classes=None, embedding_dim=256, stride=None, pretrained=None, pooling=None, dino_ckpt_path=None, ):
         super().__init__()
         self.num_classes = num_classes
         self.embedding_dim = embedding_dim
-        self.feature_strides = [4, 8, 16, 32]
         self.stride = stride
 
-        self.encoder = getattr(mix_transformer, backbone)(stride=self.stride)
+        self.encoder = build_backbone(backbone, self.stride, dino_ckpt_path)
+        self.feature_strides = getattr(self.encoder, "strides", [4, 8, 16, 32])
         self.in_channels = self.encoder.embed_dims
 
         c1_in_channels, c2_in_channels, c3_in_channels, c4_in_channels = self.in_channels
 
         # initilize encoder
-        if pretrained:
+        if pretrained and not backbone.startswith("dinov3"):
             state_dict = torch.load('pretrained/' + backbone + '.pth')
             state_dict.pop('head.weight')
             state_dict.pop('head.bias')
@@ -125,6 +133,7 @@ class TransWCD_single(nn.Module):
             else:
                 param_groups[0].append(param)
 
+        param_groups[0].extend(self.diff_c4.parameters())
         param_groups[2].append(self.classifier.weight)
 
 

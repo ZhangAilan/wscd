@@ -13,6 +13,7 @@ from tqdm import tqdm
 from datasets import weaklyCD
 from utils import evaluate_CD
 from models.model_transwcd import TransWCD_single, TransWCD_dual
+from models.dino_backbone import DEFAULT_DINO_CKPT_PATH
 
 parser = argparse.ArgumentParser()
 # LEVIR/DSIFN/WHU.yaml
@@ -25,6 +26,8 @@ parser.add_argument("--model_path", required=True, type=str, help="model_path")
 parser.add_argument("--pooling", default="gmp", type=str, help="pooling method")
 parser.add_argument("--bkg_score", default=0.45, type=float, help="bkg_score")
 parser.add_argument("--resize_long", default=256, type=int, help="resize the long side (256 or 512)")
+parser.add_argument("--dino_ckpt_path", default=os.environ.get("DINO_CKPT_PATH", DEFAULT_DINO_CKPT_PATH), type=str,
+                    help="DINOv3 ViT-H+/16 checkpoint path")
 
 
 
@@ -112,14 +115,16 @@ def main(cfg):
                                  num_classes=cfg.dataset.num_classes,
                                  embedding_dim=256,
                                  pretrained=True,
-                                 pooling=args.pooling, )
+                                 pooling=args.pooling,
+                                 dino_ckpt_path=args.dino_ckpt_path, )
     elif cfg.scheme == "transwcd_single":
         transwcd = TransWCD_single(backbone=cfg.backbone.config,
                                    stride=cfg.backbone.stride,
                                    num_classes=cfg.dataset.num_classes,
                                    embedding_dim=256,
                                    pretrained=True,
-                                   pooling=args.pooling, )
+                                   pooling=args.pooling,
+                                   dino_ckpt_path=args.dino_ckpt_path, )
     else:
         print('Please fill in cfg.scheme!')
 
