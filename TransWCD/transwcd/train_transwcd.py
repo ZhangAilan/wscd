@@ -241,10 +241,12 @@ def train(cfg):
 
             delta, eta = cal_eta(time0, n_iter + 1, cfg.train.max_iters)
             cur_lr = optimizer.param_groups[0]['lr']
+            progress = (n_iter + 1) / cfg.train.max_iters * 100
 
             logging.info(
-                "Iter: %d; Elasped: %s; ETA: %s; LR: %.3e; cc_loss: %.4f" % (
-                    n_iter + 1, delta, eta, cur_lr, avg_meter.pop('cc_loss'),))
+                "Progress: %d/%d (%.2f%%); Elasped: %s; ETA: %s; LR: %.3e; cc_loss: %.4f" % (
+                    n_iter + 1, cfg.train.max_iters, progress, delta, eta, cur_lr,
+                    avg_meter.pop('cc_loss'),))
 
         if (n_iter + 1) % cfg.train.eval_iters == 0:
             ckpt_name = os.path.join(cfg.work_dir.ckpt_dir, "transwcd_iter_%d.pth" % (n_iter + 1))
