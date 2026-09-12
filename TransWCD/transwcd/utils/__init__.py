@@ -1,6 +1,6 @@
-"""Utility modules for TransWCD."""
+"""Utility package for TransWCD.
 
-# Explicit exports keep imports reliable on older Python environments.
-from . import evaluate_CD, imutils
-
-__all__ = ["evaluate_CD", "imutils"]
+Submodules are intentionally not imported here to avoid package
+initialization cycles. Import them explicitly, for example:
+``from utils import evaluate_CD``.
+"""

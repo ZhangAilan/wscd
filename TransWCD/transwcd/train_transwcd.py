@@ -12,8 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from datasets import weaklyCD
-import utils.evaluate_CD as evaluate_CD
-import utils.imutils as imutils
+from utils import evaluate_CD, imutils
 from utils.AverageMeter import AverageMeter
 from utils.camutils_CD import cam_to_label,multi_scale_cam
 from utils.optimizer import PolyWarmupAdamW
