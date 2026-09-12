@@ -272,12 +272,13 @@ def train(cfg):
             progress = (n_iter + 1) / cfg.train.max_iters * 100
 
             ###
-            logging.info(
+            print(
                 "Progress: %d/%d (%.2f%%); Elasped: %s; ETA: %s; LR: %.3e; cc_loss: %.4f; sa_pixel: %.4f; sa_gate: %.4f" % (
                     n_iter + 1, cfg.train.max_iters, progress, delta, eta, cur_lr,
                     avg_meter.pop('cc_loss'),
                     avg_meter.pop('sa_pixel'),
-                    avg_meter.pop('sa_gate'))
+                    avg_meter.pop('sa_gate')),
+                flush=True)
             )
 
         if (n_iter + 1) % cfg.train.eval_iters == 0:
