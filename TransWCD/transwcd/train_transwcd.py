@@ -8,7 +8,6 @@ import torch
 import torch.nn.functional as F
 from omegaconf import OmegaConf
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from datasets import weaklyCD
@@ -18,8 +17,6 @@ from training_utils import (
     cam_to_label,
     multi_scale_cam,
     scores,
-    tensorboard_image,
-    tensorboard_label,
 )
 from models.model_transwcd import TransWCD_dual, TransWCD_single
 from models.dino_backbone import DEFAULT_DINO_CKPT_PATH
@@ -30,7 +27,7 @@ warnings.filterwarnings("ignore")
 parser = argparse.ArgumentParser()
 # LEVIR/DSIFN/WHU.yaml
 parser.add_argument("--config",
-                    default='configs/LEVIR.yaml',
+                    default='configs/WHU.yaml',
                     type=str,
                     help="config")
 parser.add_argument("--pooling", default="gmp", type=str, help="pooling method")
@@ -169,9 +166,6 @@ def train(cfg):
     param_groups = transwcd.get_param_groups()
     transwcd.to(device)
 
-    writer = SummaryWriter(cfg.work_dir.logger_dir)
-    print('writer:',writer)
-
     optimizer = PolyWarmupAdamW(
         params=[
             {
@@ -248,25 +242,9 @@ def train(cfg):
             delta, eta = cal_eta(time0, n_iter + 1, cfg.train.max_iters)
             cur_lr = optimizer.param_groups[0]['lr']
 
-            pred_cam = pred_cam.cpu().numpy().astype(np.int16)
-
             logging.info(
                 "Iter: %d; Elasped: %s; ETA: %s; LR: %.3e; cc_loss: %.4f" % (
                     n_iter + 1, delta, eta, cur_lr, avg_meter.pop('cc_loss'),))
-
-            grid_imgs_A, grid_cam_A = tensorboard_image(imgs=inputs_A.clone(), cam=valid_cam)
-            grid_imgs_B, grid_cam_B = tensorboard_image(imgs=inputs_B.clone(), cam=valid_cam)
-
-            grid_pred_cam = tensorboard_label(labels=pred_cam)
-
-            writer.add_image("train/images_A"+str(img_name), grid_imgs_A, global_step=n_iter)
-            writer.add_image("train/images_B"+str(img_name), grid_imgs_B, global_step=n_iter)
-            writer.add_image("cam/valid_cams_A", grid_cam_A, global_step=n_iter)
-            writer.add_image("cam/valid_cams_B", grid_cam_B, global_step=n_iter)
-            writer.add_image("train/preds_cam", grid_pred_cam, global_step=n_iter)
-
-            writer.add_scalars('train/loss', {"cc_loss": cc_loss.item()},
-                               global_step=n_iter)
 
         if (n_iter + 1) % cfg.train.eval_iters == 0:
             ckpt_name = os.path.join(cfg.work_dir.ckpt_dir, "transwcd_iter_%d.pth" % (n_iter + 1))
@@ -295,11 +273,9 @@ if __name__ == "__main__":
 
     cfg.work_dir.ckpt_dir = os.path.join(cfg.work_dir.dir, cfg.work_dir.ckpt_dir, timestamp)
     cfg.work_dir.pred_dir = os.path.join(cfg.work_dir.dir, cfg.work_dir.pred_dir)
-    cfg.work_dir.logger_dir = os.path.join(cfg.work_dir.dir, cfg.work_dir.logger_dir, timestamp)
 
     os.makedirs(cfg.work_dir.ckpt_dir, exist_ok=True)
     os.makedirs(cfg.work_dir.pred_dir, exist_ok=True)
-    os.makedirs(cfg.work_dir.logger_dir, exist_ok=True)
 
     setup_logger(filename=os.path.join(cfg.work_dir.dir, timestamp + '.log'))
     logging.info('\nargs: %s' % args)

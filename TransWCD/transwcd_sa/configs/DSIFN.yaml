@@ -16,7 +16,6 @@ work_dir:
   dir: work_dir_DSIFN
   ckpt_dir: checkpoints
   pred_dir: predictions
-  logger_dir: logger
 
 train:
   split: train

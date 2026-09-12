@@ -3,8 +3,6 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-import torchvision
-import matplotlib.pyplot as plt
 
 
 class AverageMeter:
@@ -119,32 +117,3 @@ def scores(label_trues, label_preds, num_classes=2):
         "recall": dict(zip(range(num_classes), recall)),
     }
 
-
-def _denormalize_img(images, mean=(123.675, 116.28, 103.53), std=(58.395, 57.12, 57.375)):
-    result = torch.zeros_like(images)
-    for channel, (channel_mean, channel_std) in enumerate(zip(mean, std)):
-        result[:, channel] = images[:, channel] * channel_std + channel_mean
-    return result.type(torch.uint8)
-
-
-def tensorboard_image(imgs, cam):
-    images = _denormalize_img(imgs)
-    grid_imgs = torchvision.utils.make_grid(images, nrow=4)
-    cam = F.interpolate(cam, size=images.shape[2:], mode="bilinear", align_corners=False).cpu()
-    heatmap = plt.get_cmap("jet")(cam.max(dim=1)[0].numpy())[:, :, :, :3] * 255
-    cam_image = torch.from_numpy(heatmap).permute(0, 3, 1, 2) * 0.5 + images.cpu() * 0.5
-    return grid_imgs, torchvision.utils.make_grid(cam_image.type(torch.uint8), nrow=4)
-
-
-def tensorboard_label(labels):
-    labels = np.squeeze(labels)
-    cmap = np.zeros((256, 3), dtype=np.uint8)
-    for index in range(256):
-        value = index
-        for bit in range(8):
-            cmap[index, 0] |= ((value & 1) != 0) << (7 - bit)
-            cmap[index, 1] |= ((value & 2) != 0) << (7 - bit)
-            cmap[index, 2] |= ((value & 4) != 0) << (7 - bit)
-            value >>= 3
-    colored = torch.from_numpy(cmap[labels.astype(np.int16)]).permute(0, 3, 1, 2)
-    return torchvision.utils.make_grid(colored, nrow=4)

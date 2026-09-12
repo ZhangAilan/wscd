@@ -2,7 +2,6 @@ torch==1.8.1
 torchvision==0.9.1
 imageio==2.6.1
 joblib==1.1.1
-matplotlib==3.2.2
 numpy==1.19.5
 omegaconf==2.0.0
 opencv_python==4.6.0.66
