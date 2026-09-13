@@ -34,8 +34,8 @@ def calculate_metrics(predictions, labels, num_classes=2):
     hist = np.zeros((num_classes, num_classes), dtype=np.float64)
 
     for prediction, label in zip(predictions, labels):
-        prediction = prediction.reshape(-1).astype(np.int64)
-        label = label.reshape(-1).astype(np.int64)
+        prediction = (prediction > 0).reshape(-1).astype(np.int64)
+        label = (label > 0).reshape(-1).astype(np.int64)
         valid = (label >= 0) & (label < num_classes)
         hist += np.bincount(
             num_classes * label[valid] + prediction[valid],
@@ -72,6 +72,33 @@ def calculate_metrics(predictions, labels, num_classes=2):
         "change_iou": iou[1],
         "kappa": kappa,
     }
+
+
+def load_mask_pairs(prediction_dir, label_dir):
+    """Load same-named binary PNG masks from prediction and label folders."""
+    prediction_names = {
+        name for name in os.listdir(prediction_dir) if name.lower().endswith(".png")
+    }
+    label_names = {
+        name for name in os.listdir(label_dir) if name.lower().endswith(".png")
+    }
+    names = sorted(prediction_names & label_names)
+    if not names:
+        raise ValueError(
+            f"No matching PNG masks found in {prediction_dir} and {label_dir}."
+        )
+
+    predictions, labels = [], []
+    for name in names:
+        prediction = np.asarray(Image.open(os.path.join(prediction_dir, name)).convert("L"))
+        label = np.asarray(Image.open(os.path.join(label_dir, name)).convert("L"))
+        if prediction.shape != label.shape:
+            raise ValueError(
+                f"Mask shape mismatch for {name}: prediction={prediction.shape}, label={label.shape}"
+            )
+        predictions.append(prediction)
+        labels.append(label)
+    return predictions, labels, names
 
 
 def save_metrics(metrics, output_path):
@@ -217,8 +244,12 @@ def main(cfg):
 
 
     metrics_path = os.path.join(args.save_dir, "metrics.txt")
-    metrics = calculate_metrics(cams, gts)
+    prediction_dir = os.path.join(args.save_dir, "prediction")
+    label_dir = os.path.join(cfg.dataset.root_dir, "label")
+    file_predictions, file_labels, matched_names = load_mask_pairs(prediction_dir, label_dir)
+    metrics = calculate_metrics(file_predictions, file_labels)
     save_metrics(metrics, metrics_path)
+    print(f"Evaluated {len(matched_names)} matching mask pairs.", flush=True)
     print(f"Metrics saved to: {metrics_path}", flush=True)
 
     return True

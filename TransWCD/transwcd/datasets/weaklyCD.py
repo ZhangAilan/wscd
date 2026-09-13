@@ -211,6 +211,8 @@ class CDDataset(weaklyCDDataset):      # val_dataset
 
         cls_label = self.label_list[img_name]
 
-        label = label // 255
+        # WHU masks may be stored as boolean/0-1 images or as 0-255 PNGs.
+        # Normalize both formats to the binary {0, 1} representation.
+        label = (label > 0).astype(np.uint8)
 
         return img_name, image_A, image_B, label, cls_label
