@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from omegaconf import OmegaConf
 from tqdm import tqdm
 from datasets import weaklyCD
-from training_utils import cam_to_label, multi_scale_cam, scores
+from training_utils import cam_to_label, multi_scale_cam
 from models.model_transwcd import TransWCD_single, TransWCD_dual
 from models.dino_backbone import DEFAULT_DINO_CKPT_PATH
 
@@ -27,6 +27,77 @@ parser.add_argument("--bkg_score", default=0.45, type=float, help="bkg_score")
 parser.add_argument("--resize_long", default=256, type=int, help="resize the long side (256 or 512)")
 parser.add_argument("--dino_ckpt_path", default=os.environ.get("DINO_CKPT_PATH", DEFAULT_DINO_CKPT_PATH), type=str,
                     help="DINOv3 ViT-H+/16 checkpoint path")
+
+
+def calculate_metrics(predictions, labels, num_classes=2):
+    """Calculate binary change-detection metrics from prediction masks."""
+    hist = np.zeros((num_classes, num_classes), dtype=np.float64)
+
+    for prediction, label in zip(predictions, labels):
+        prediction = prediction.reshape(-1).astype(np.int64)
+        label = label.reshape(-1).astype(np.int64)
+        valid = (label >= 0) & (label < num_classes)
+        hist += np.bincount(
+            num_classes * label[valid] + prediction[valid],
+            minlength=num_classes ** 2,
+        ).reshape(num_classes, num_classes)
+
+    if not hist.sum():
+        raise ValueError("No valid pixels were available for metric calculation.")
+
+    eps = np.finfo(np.float64).eps
+    true_negative, false_positive = hist[0]
+    false_negative, true_positive = hist[1]
+    iou = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist) + eps)
+    oa = np.trace(hist) / (hist.sum() + eps)
+    class_accuracy = np.nanmean(np.diag(hist) / (hist.sum(axis=1) + eps))
+    frequency = hist.sum(axis=1) / (hist.sum() + eps)
+    fwavacc = (frequency * iou).sum()
+    precision = true_positive / (true_positive + false_positive + eps)
+    recall = true_positive / (true_positive + false_negative + eps)
+    f1_score = 2 * precision * recall / (precision + recall + eps)
+    expected_accuracy = (hist.sum(axis=0) * hist.sum(axis=1)).sum() / (hist.sum() ** 2 + eps)
+    kappa = (oa - expected_accuracy) / (1 - expected_accuracy + eps)
+
+    return {
+        "confusion_matrix": hist,
+        "overall_accuracy": oa,
+        "class_average_accuracy": class_accuracy,
+        "iou": iou,
+        "mean_iou": np.nanmean(iou),
+        "frequency_weighted_accuracy": fwavacc,
+        "change_precision": precision,
+        "change_recall": recall,
+        "change_f1": f1_score,
+        "change_iou": iou[1],
+        "kappa": kappa,
+    }
+
+
+def save_metrics(metrics, output_path):
+    """Print metrics and persist the same report as UTF-8 text."""
+    lines = [
+        "=" * 60,
+        "Binary Change Detection Metrics",
+        "=" * 60,
+        "Confusion matrix [ground truth rows, prediction columns]:",
+        np.array2string(metrics["confusion_matrix"], precision=0, suppress_small=True),
+        f"Overall Accuracy:             {metrics['overall_accuracy']:.4f}",
+        f"Class Average Accuracy:       {metrics['class_average_accuracy']:.4f}",
+        f"IoU [unchanged, changed]:     {metrics['iou'].tolist()}",
+        f"Mean IoU:                     {metrics['mean_iou']:.4f}",
+        f"Frequency Weighted Accuracy:  {metrics['frequency_weighted_accuracy']:.4f}",
+        f"Change Precision:             {metrics['change_precision']:.4f}",
+        f"Change Recall:                {metrics['change_recall']:.4f}",
+        f"Change F1:                    {metrics['change_f1']:.4f}",
+        f"Change IoU:                   {metrics['change_iou']:.4f}",
+        f"Kappa:                        {metrics['kappa']:.4f}",
+        "=" * 60,
+    ]
+    report = "\n".join(lines)
+    print(report, flush=True)
+    with open(output_path, "w", encoding="utf-8") as file:
+        file.write(report + "\n")
 
 
 
@@ -145,10 +216,10 @@ def main(cfg):
     torch.cuda.empty_cache()
 
 
-    cams_score = scores(gts, cams)
-
-    print("cams score:")
-    print(cams_score)
+    metrics_path = os.path.join(args.save_dir, "metrics.txt")
+    metrics = calculate_metrics(cams, gts)
+    save_metrics(metrics, metrics_path)
+    print(f"Metrics saved to: {metrics_path}", flush=True)
 
     return True
 
