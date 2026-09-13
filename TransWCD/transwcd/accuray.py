@@ -48,8 +48,15 @@ def align_mask(mask, target_shape):
 
 
 def mask_key(name):
-    """Folder-independent key used to match prediction and label files."""
-    return os.path.splitext(os.path.basename(name))[0].lower()
+    """Folder-independent key used to match prediction and label files.
+
+    Strips any repeated ".png" suffix, so "test_000024.png.png" and
+    "test_000024.png" share the key "test_000024".
+    """
+    key = os.path.basename(name).lower()
+    while key.endswith(".png"):
+        key = key[:-4]
+    return key
 
 
 def list_masks(directory):

@@ -29,6 +29,14 @@ parser.add_argument("--dino_ckpt_path", default=os.environ.get("DINO_CKPT_PATH",
                     help="DINOv3 ViT-H+/16 checkpoint path")
 
 
+def mask_key(name):
+    """Basename without any trailing .png suffix (tolerates double extension)."""
+    key = os.path.basename(name).lower()
+    while key.endswith(".png"):
+        key = key[:-4]
+    return key
+
+
 def calculate_metrics(predictions, labels, num_classes=2):
     """Calculate binary change-detection metrics from prediction masks."""
     hist = np.zeros((num_classes, num_classes), dtype=np.float64)
@@ -75,30 +83,38 @@ def calculate_metrics(predictions, labels, num_classes=2):
 
 
 def load_mask_pairs(prediction_dir, label_dir):
-    """Load same-named binary PNG masks from prediction and label folders."""
-    prediction_names = {
-        name for name in os.listdir(prediction_dir) if name.lower().endswith(".png")
+    """Load same-named binary PNG masks, tolerating a duplicated .png suffix."""
+    prediction_files = {
+        mask_key(name): name
+        for name in os.listdir(prediction_dir)
+        if name.lower().endswith(".png")
     }
-    label_names = {
-        name for name in os.listdir(label_dir) if name.lower().endswith(".png")
+    label_files = {
+        mask_key(name): name
+        for name in os.listdir(label_dir)
+        if name.lower().endswith(".png")
     }
-    names = sorted(prediction_names & label_names)
-    if not names:
+    keys = sorted(set(prediction_files) & set(label_files))
+    if not keys:
         raise ValueError(
             f"No matching PNG masks found in {prediction_dir} and {label_dir}."
         )
 
     predictions, labels = [], []
-    for name in names:
-        prediction = np.asarray(Image.open(os.path.join(prediction_dir, name)).convert("L"))
-        label = np.asarray(Image.open(os.path.join(label_dir, name)).convert("L"))
+    for key in keys:
+        prediction = np.asarray(
+            Image.open(os.path.join(prediction_dir, prediction_files[key])).convert("L")
+        )
+        label = np.asarray(
+            Image.open(os.path.join(label_dir, label_files[key])).convert("L")
+        )
         if prediction.shape != label.shape:
             raise ValueError(
-                f"Mask shape mismatch for {name}: prediction={prediction.shape}, label={label.shape}"
+                f"Mask shape mismatch for {key}: prediction={prediction.shape}, label={label.shape}"
             )
         predictions.append(prediction)
         labels.append(label)
-    return predictions, labels, names
+    return predictions, labels, keys
 
 
 def save_metrics(metrics, output_path):
@@ -167,7 +183,8 @@ def test(model, dataset, test_scales=1.0):
             gts += list(labels.cpu().numpy().astype(np.int16))
 
             # 以png格式保存cam结果
-            cam_path = args.save_dir + '/prediction/' + name[0] + '.png'
+            stem = mask_key(name[0])
+            cam_path = args.save_dir + '/prediction/' + stem + '.png'
             cam_img = Image.fromarray((cam_label.squeeze().cpu().numpy() * 255).astype(np.uint8))
             cam_img.save(cam_path)
 
@@ -189,7 +206,7 @@ def test(model, dataset, test_scales=1.0):
             label_rgb[fp_pixels] = [255, 0, 0]  # Red
 
             # Save the labeled image
-            label_with_fn_fp_path = args.save_dir + '/prediction_color/' + name[0] + '.png'
+            label_with_fn_fp_path = args.save_dir + '/prediction_color/' + stem + '.png'
             label_with_fn_fp_img = Image.fromarray(label_rgb)
             label_with_fn_fp_img.save(label_with_fn_fp_path)
 
